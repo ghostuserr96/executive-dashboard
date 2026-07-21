@@ -127,7 +127,7 @@ export default function Attendance() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <h3 className="text-3xl font-semibold mt-2">{stat.value}</h3>
+                  <h3 className="text-2xl font-semibold mt-2 truncate">{stat.value}</h3>
                 </div>
                 <div className={`p-2 rounded-full ${stat.title === 'Checked in' ? 'bg-green-100 dark:bg-green-500/20' : stat.title === 'Late' ? 'bg-amber-100 dark:bg-amber-500/20' : stat.title === 'Absent' ? 'bg-red-100 dark:bg-red-500/20' : 'bg-blue-100 dark:bg-blue-500/20'}`}>
                   {stat.icon}

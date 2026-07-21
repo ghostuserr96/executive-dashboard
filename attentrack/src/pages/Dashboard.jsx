@@ -93,12 +93,15 @@ export default function Dashboard() {
             <p className="mt-1 text-sm text-muted-foreground">Here's what's happening at Northwind Labs today — {formattedDate}.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex bg-muted p-1 rounded-xl w-full md:w-auto overflow-x-auto scrollbar-hide">
+            <div className="flex bg-muted p-1 rounded-full w-full md:w-auto overflow-x-auto scrollbar-hide">
               {['Today', 'Week', 'Month', 'Quarter'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTimeRange(t)}
-                  className={`px-3 py-1 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${timeRange === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground cursor-pointer'}`}>
+                  className={`px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
+                    timeRange === t ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground cursor-pointer'
+                  }`}
+                >
                   {t}
                 </button>
               ))}
@@ -181,7 +184,7 @@ export default function Dashboard() {
             { title: 'On leave', val: '15', icon: PlaneTakeoff, color: 'text-info', bg: 'bg-info/10', trendIcon: TrendingUp, trendVal: '+0.6%', trendColor: 'text-success bg-success/10' },
             { title: 'Birthdays', val: '3', icon: Cake, color: 'text-primary', bg: 'bg-primary/10', label: 'Today' },
             { title: 'Anniversaries', val: '7', icon: PartyPopper, color: 'text-primary', bg: 'bg-primary/10', label: 'This week' },
-            { title: 'Monthly payroll', val: '$2,707,833', icon: Wallet, color: 'text-success', bg: 'bg-success/10', trendIcon: TrendingUp, trendVal: '+3.1%', trendColor: 'text-success bg-success/10' },
+            { title: 'Monthly payroll', val: '$2.7M', icon: Wallet, color: 'text-success', bg: 'bg-success/10', trendIcon: TrendingUp, trendVal: '+3.1%', trendColor: 'text-success bg-success/10' },
             { title: 'Pending tasks', val: '12', icon: ListChecks, color: 'text-warning', bg: 'bg-warning/10' },
             { title: 'Satisfaction', val: '8.6/10', icon: Heart, color: 'text-success', bg: 'bg-success/10', trendIcon: TrendingUp, trendVal: '+1.8%', trendColor: 'text-success bg-success/10' },
             { title: 'Attrition risk', val: '4.2%', icon: AlertTriangle, color: 'text-destructive', bg: 'bg-destructive/10', trendIcon: TrendingDown, trendVal: '-0.4%', trendColor: 'text-destructive bg-destructive/10' },
