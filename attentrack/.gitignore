@@ -24,3 +24,11 @@ dist-ssr
 *.sw?
 
 img/
+
+# Agent configurations
+.agents/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
