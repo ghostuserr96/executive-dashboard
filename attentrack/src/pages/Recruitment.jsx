@@ -104,7 +104,7 @@ export default function Recruitment() {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {recruitmentStats.map((stat, i) => (
-            <div key={i} className="card-elevated p-6 flex flex-col justify-between">
+            <div key={i} className="card-elevated hover-lift p-6 flex flex-col justify-between">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
@@ -172,7 +172,7 @@ export default function Recruitment() {
         {/* Job Postings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {jobPostings.map((job, i) => (
-            <div key={i} className="card-elevated p-6 flex flex-col">
+            <div key={i} className="card-elevated hover-lift p-6 flex flex-col">
               <div className="flex items-center justify-between mb-5">
                 <span className="px-2.5 py-1 text-[11px] font-semibold text-muted-foreground bg-muted rounded-full border border-border/50">
                   {job.id}

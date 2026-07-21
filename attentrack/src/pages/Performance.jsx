@@ -112,7 +112,7 @@ export default function Performance() {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {performanceStats.map((stat, i) => (
-            <div key={i} className="card-elevated p-6 flex flex-col justify-between">
+            <div key={i} className="card-elevated hover-lift p-6 flex flex-col justify-between">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
