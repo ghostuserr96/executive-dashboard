@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
-import { 
+import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, Rectangle
 } from 'recharts';
@@ -91,7 +91,7 @@ export default function Analytics() {
   return (
     <main className="flex-1 min-w-0 overflow-y-auto bg-background/50">
       <div className="mx-auto max-w-[1600px] p-4 lg:p-8 space-y-6">
-        
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
@@ -105,11 +105,10 @@ export default function Analytics() {
                 <button
                   key={f}
                   onClick={() => setTimeFilter(f)}
-                  className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                    timeFilter === f 
-                      ? 'bg-background text-foreground shadow-sm' 
+                  className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${timeFilter === f
+                      ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   {f}
                 </button>
@@ -132,23 +131,23 @@ export default function Analytics() {
 
         {/* Charts Top Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-          
+
           {/* Headcount Forecast */}
-          <div className="card-elevated p-6 flex flex-col h-[320px]">
+          <div className="card-elevated p-6 flex flex-col h-80">
             <h3 className="font-semibold text-base mb-6 text-foreground">Headcount forecast</h3>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={headcountData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorHeadcount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                  <RechartsTooltip 
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <RechartsTooltip
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}
                   />
                   <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorHeadcount)" />
@@ -158,15 +157,15 @@ export default function Analytics() {
           </div>
 
           {/* Attendance Trend */}
-          <div className="card-elevated p-6 flex flex-col h-[320px]">
+          <div className="card-elevated p-6 flex flex-col h-80">
             <h3 className="font-semibold text-base mb-6 text-foreground">Attendance trend</h3>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={attendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} minTickGap={20} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                  <RechartsTooltip 
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} minTickGap={20} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <RechartsTooltip
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}
                   />
                   <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2.5} dot={false} activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }} />
@@ -177,16 +176,16 @@ export default function Analytics() {
           </div>
 
           {/* Payroll Cost */}
-          <div className="card-elevated p-6 flex flex-col h-[320px]">
+          <div className="card-elevated p-6 flex flex-col h-80">
             <h3 className="font-semibold text-base mb-6 text-foreground">Payroll cost ($M)</h3>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={payrollData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={32}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                  <RechartsTooltip 
-                    cursor={{fill: 'transparent'}}
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <RechartsTooltip
+                    cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}
                   />
                   <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} activeBar={{ fill: '#d1d5db' }} />
@@ -196,7 +195,7 @@ export default function Analytics() {
           </div>
 
           {/* Leave Distribution */}
-          <div className="card-elevated p-6 flex flex-col h-[320px]">
+          <div className="card-elevated p-6 flex flex-col h-80">
             <h3 className="font-semibold text-base mb-6 text-foreground">Leave distribution</h3>
             <div className="flex-1 min-h-0 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
@@ -215,7 +214,7 @@ export default function Analytics() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <RechartsTooltip 
+                  <RechartsTooltip
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}
                   />
                 </PieChart>
