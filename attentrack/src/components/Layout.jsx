@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { Outlet } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 
 export default function Layout() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="flex min-h-screen w-full bg-background relative">
-      <Sidebar />
+      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <div className="flex flex-1 flex-col min-w-0 h-screen overflow-hidden">
-        <Header />
+        <Header onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)} />
         <Outlet />
       </div>
       
