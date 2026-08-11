@@ -1,98 +1,281 @@
-import React from 'react';
-import { Search, Filter, Users, Mail, MapPin, Phone, Download, Plus, ChevronDown, SlidersHorizontal, LayoutGrid, List } from 'lucide-react';
-
-const employees = [
-  {
-    id: 1,
-    name: "Aiko Suzuki",
-    initials: "AS",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
-    role: "Legal Counsel",
-    department: "Legal",
-    email: "aiko.suzuki@northwind.co",
-    location: "Singapore",
-    status: "Active",
-    skills: ["GraphQL", "Leadership", "SQL"]
-  },
-  {
-    id: 2,
-    name: "Alex Johnson",
-    initials: "AJ",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    role: "Senior Developer",
-    department: "Engineering",
-    email: "alex.j@northwind.co",
-    location: "London",
-    status: "Active",
-    skills: ["React", "TypeScript", "Node.js"]
-  },
-  {
-    id: 3,
-    name: "Sarah Chen",
-    initials: "SC",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-    role: "Product Manager",
-    department: "Product",
-    email: "sarah.c@northwind.co",
-    location: "New York",
-    status: "On Leave",
-    skills: ["Agile", "Strategy", "UX"]
-  },
-  {
-    id: 4,
-    name: "Michael Torres",
-    initials: "MT",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
-    role: "UX Designer",
-    department: "Design",
-    email: "m.torres@northwind.co",
-    location: "San Francisco",
-    status: "Active",
-    skills: ["Figma", "Prototyping", "Research"]
-  },
-  {
-    id: 5,
-    name: "Emily Davis",
-    initials: "ED",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    role: "HR Specialist",
-    department: "Human Resources",
-    email: "emily.d@northwind.co",
-    location: "Chicago",
-    status: "Active",
-    skills: ["Recruiting", "Onboarding", "Policy"]
-  }
-];
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Search, Filter, Users, Mail, MapPin, Phone, Download, Plus, ChevronDown, SlidersHorizontal, LayoutGrid, List, Trash2, X, CheckCircle2, Building, Upload, Camera, Image as ImageIcon, Loader2, Pencil } from 'lucide-react';
+import { useDataContext } from '../context/DataContext';
+import { employeeService } from '../services/employeeService';
+import { organizationService } from '../services/organizationService';
+import { uploadService } from '../services/uploadService';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 export default function Employees() {
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+  const { employees: contextEmployees, refreshAll } = useDataContext();
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [teams, setTeams] = useState([]);
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    const urlQuery = searchParams.get('search');
+    if (urlQuery) {
+      setSearchTerm(urlQuery);
+    }
+  }, [searchParams]);
+  const [selectedDept, setSelectedDept] = useState('All');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const fileInputRef = useRef(null);
+
+  const LEVELS = ['C-Level', 'VP', 'Director', 'Manager', 'Lead', 'Senior', 'Individual'];
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: '',
+    department: '',
+    teamId: '',
+    managerId: '',
+    level: 'Individual',
+    location: 'Remote',
+    phone: '',
+    skills: '',
+    avatar: '',
+    dob: '',
+    joinDate: new Date().toISOString().split('T')[0],
+    status: 'Active'
+  });
+
+  useEffect(() => {
+    const loadOrgData = async () => {
+      try {
+        const [deptRes, teamRes] = await Promise.allSettled([
+          organizationService.getAllDepartments(),
+          organizationService.getAllTeams()
+        ]);
+        if (deptRes.status === 'fulfilled' && deptRes.value?.data) {
+          setDepartments(deptRes.value.data);
+        }
+        if (teamRes.status === 'fulfilled' && teamRes.value?.data) {
+          setTeams(teamRes.value.data);
+        }
+      } catch (e) {
+        console.warn('Failed to load org data for employee form', e);
+      }
+    };
+    loadOrgData();
+  }, []);
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    setUploadError('');
+    try {
+      const res = await uploadService.uploadFile(file, 'attentrack/employees');
+      if (res && res.url) {
+        setFormData(prev => ({ ...prev, avatar: res.url }));
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setUploadError(err.message || 'Failed to upload photo to Cloudinary');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+
+  const employeesList = Array.isArray(contextEmployees) ? contextEmployees : [];
+
+  const filteredEmployees = employeesList.filter((emp) => {
+    const q = searchTerm.trim().toLowerCase();
+    const matchesSearch = !q ||
+      emp.name.toLowerCase().includes(q) ||
+      emp.email.toLowerCase().includes(q) ||
+      emp.role.toLowerCase().includes(q) ||
+      emp.department.toLowerCase().includes(q) ||
+      (emp.location && emp.location.toLowerCase().includes(q));
+    const matchesDept = selectedDept === 'All' || emp.department === selectedDept;
+    return matchesSearch && matchesDept;
+  });
+
+  const handleOpenAddModal = () => {
+    setEditingEmployeeId(null);
+    setFormData({
+      name: '',
+      email: '',
+      role: '',
+      department: '',
+      teamId: '',
+      managerId: '',
+      level: 'Individual',
+      location: 'Remote',
+      phone: '',
+      skills: '',
+      avatar: '',
+      dob: '',
+      joinDate: new Date().toISOString().split('T')[0],
+      status: 'Active'
+    });
+    setUploadError('');
+    setIsAddModalOpen(true);
+  };
+
+  const handleOpenEditModal = (emp) => {
+    setEditingEmployeeId(emp.id);
+    setFormData({
+      name: emp.name || '',
+      email: emp.email || '',
+      role: emp.role || '',
+      department: emp.department || '',
+      teamId: emp.teamId || '',
+      managerId: emp.managerId || '',
+      level: emp.level || 'Individual',
+      location: emp.location || 'Remote',
+      phone: emp.phone || '',
+      skills: Array.isArray(emp.skills) ? emp.skills.join(', ') : (emp.skills || ''),
+      avatar: emp.avatar || '',
+      dob: emp.dob || '',
+      joinDate: emp.joinDate || '',
+      status: emp.status || 'Active'
+    });
+    setUploadError('');
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveEmployee = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const skillsArray = typeof formData.skills === 'string'
+        ? formData.skills.split(',').map((s) => s.trim()).filter(Boolean)
+        : formData.skills;
+
+      const payload = {
+        ...formData,
+        skills: skillsArray,
+        avatar: formData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=3b82f6&color=fff&bold=true`,
+        initials: formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+        dob: formData.dob || null,
+        joinDate: formData.joinDate || new Date().toISOString().split('T')[0],
+        teamId: formData.teamId || null,
+        managerId: formData.managerId || null,
+        level: formData.level || 'Individual'
+      };
+
+      if (editingEmployeeId) {
+        await employeeService.update(editingEmployeeId, payload);
+        setSuccessMsg('Employee profile updated successfully!');
+      } else {
+        await employeeService.create(payload);
+        setSuccessMsg('New employee added successfully!');
+      }
+
+      await refreshAll();
+      setIsAddModalOpen(false);
+      setEditingEmployeeId(null);
+      setTimeout(() => setSuccessMsg(''), 4000);
+      setFormData({
+        name: '',
+        email: '',
+        role: '',
+        department: '',
+        teamId: '',
+        managerId: '',
+        level: 'Individual',
+        location: 'Remote',
+        phone: '',
+        skills: '',
+        avatar: '',
+        dob: '',
+        joinDate: new Date().toISOString().split('T')[0],
+        status: 'Active'
+      });
+    } catch (err) {
+      alert('Failed saving employee: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to remove this employee record?')) {
+      try {
+        await employeeService.delete(id);
+        await refreshAll();
+      } catch (err) {
+        alert('Failed deleting employee: ' + err.message);
+      }
+    }
+  };
+
+  const handleExportCSV = () => {
+    const csvRows = [
+      ['ID', 'Name', 'Role', 'Department', 'Email', 'Location', 'Status'],
+      ...filteredEmployees.map(e => [e.id, e.name, e.role, e.department, e.email, e.location, e.status])
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map(e => e.join(',')).join('\n');
+    const encodedUri = encodeURIComponent(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', `data:text/csv;charset=utf-8,${encodedUri}`);
+    link.setAttribute('download', `attentrack_employees_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const departmentsList = ['All', ...departments.map(d => d.name)];
+  const deptOptions = departments.map(d => ({ label: d.name, value: d.name }));
+  const teamOptions = teams.map(t => ({ label: `${t.name} (${t.department?.name || ''})`, value: t.id }));
+  const managerOptions = employeesList
+    .filter(e => e.id !== editingEmployeeId)
+    .map(e => ({ label: `${e.name} - ${e.role}`, value: e.id }));
+
   return (
     <main className="flex-1 min-w-0 overflow-y-auto">
       <div className="mx-auto max-w-[1600px] p-4 lg:p-8 space-y-6 animate-fade-in">
+        {successMsg && (
+          <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl flex items-center gap-3 text-emerald-400 text-sm animate-in fade-in">
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-4 md:flex-row md:items-start justify-between">
           <div>
             <div className="text-[11px] font-bold tracking-wider text-primary uppercase mb-1">People</div>
-            <h1 className="text-2xl font-semibold tracking-tight">Employee directory</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Employee Directory</h1>
             <p className="text-sm text-muted-foreground mt-1">Every teammate, one search away. Filter by department, role, location and more.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 rounded-xl gap-2 cursor-pointer">
+            <button
+              onClick={handleExportCSV}
+              className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 rounded-xl gap-2 cursor-pointer shadow-sm"
+            >
               <Download className="h-4 w-4" />
-              Export
+              Export Directory
             </button>
-            <button className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 rounded-xl gap-2 cursor-pointer">
+            <button
+              onClick={handleOpenAddModal}
+              className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 rounded-xl gap-2 cursor-pointer"
+            >
               <Plus className="h-4 w-4" />
-              Add employee
+              Add Employee
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'Total', value: '250' },
-            { label: 'Full-time', value: '157' },
-            { label: 'Contractors', value: '28' },
-            { label: 'Departments', value: '12' },
-            { label: 'Countries', value: '5' }
+            { label: 'Total Members', value: employeesList.length },
+            { label: 'Active', value: employeesList.filter(e => e.status === 'Active').length },
+            { label: 'Departments', value: new Set(employeesList.map(e => e.department).filter(Boolean)).size },
+            { label: 'Locations', value: new Set(employeesList.map(e => e.location).filter(Boolean)).size }
           ].map((metric, i) => (
             <div key={i} className="card-elevated p-4 flex flex-col justify-center gap-1">
               <span className="text-[13px] text-muted-foreground font-medium">{metric.label}</span>
@@ -104,86 +287,403 @@ export default function Employees() {
         <div className="card-elevated p-2 flex flex-col md:flex-row items-center gap-2">
           <div className="relative flex-1 w-full flex items-center pl-2">
             <Search className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
-            <input 
-              placeholder="Search by name, email or role..." 
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, email or role..."
               className="flex h-9 w-full bg-transparent text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 border-0"
             />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button className="inline-flex items-center justify-between whitespace-nowrap rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 min-w-[140px] cursor-pointer">
-              All departments
-              <ChevronDown className="h-4 w-4 opacity-50" />
-            </button>
-            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 gap-2 cursor-pointer">
-              <SlidersHorizontal className="h-4 w-4" />
-              More filters
-            </button>
+          <div className="flex items-center gap-2 shrink-0 min-w-[170px]">
+            <CustomSelect
+              options={deptOptions}
+              value={selectedDept}
+              onChange={setSelectedDept}
+            />
+
             <div className="inline-flex items-center justify-center rounded-lg bg-secondary/50 p-1 h-9">
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all bg-background text-foreground shadow-sm h-7 gap-2 cursor-pointer">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all h-7 gap-2 cursor-pointer ${viewMode === 'grid' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
                 <LayoutGrid className="h-4 w-4" />
                 Grid
               </button>
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all text-muted-foreground hover:text-foreground h-7 gap-2 cursor-pointer">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all h-7 gap-2 cursor-pointer ${viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
                 <List className="h-4 w-4" />
                 Table
               </button>
             </div>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {employees.map(emp => (
-            <div key={emp.id} className="card-elevated hover-lift overflow-hidden">
-              <div className="h-16 bg-gradient-to-r from-blue-600 to-cyan-400"></div>
-              <div className="px-4 pb-4 -mt-8">
-                <div className="flex items-end justify-between">
-                  <span className="relative flex h-16 w-16 shrink-0 overflow-hidden rounded-full ring-4 ring-card bg-background">
-                    {emp.avatar ? (
-                      <img className="aspect-square h-full w-full object-cover" src={emp.avatar} alt={emp.name} />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center rounded-full bg-muted">{emp.initials}</span>
-                    )}
-                  </span>
-                  <div className={`inline-flex items-center border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-0 rounded-md text-[10px] px-2 py-0.5 ${emp.status === 'Active' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                    {emp.status}
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <div className="font-semibold truncate">{emp.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{emp.role} · {emp.department}</div>
-                </div>
-                <div className="mt-3 space-y-1 text-[11px] text-muted-foreground">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Mail className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{emp.email}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="h-3 w-3 shrink-0" />
-                    {emp.location}
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {emp.skills.map((skill, idx) => (
-                    <div key={idx} className="inline-flex items-center border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md text-[10px] font-normal border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 px-2 py-0.5">
-                      {skill}
+
+        {filteredEmployees.length === 0 ? (
+          <div className="card-elevated p-12 text-center border border-dashed border-border rounded-2xl">
+            <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground/40" />
+            <h3 className="font-semibold text-lg text-foreground mb-1">
+              {searchTerm || selectedDept !== 'All' ? 'No matching employees' : 'No employees yet'}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-5">
+              {searchTerm || selectedDept !== 'All'
+                ? 'Try adjusting your search or filter criteria.'
+                : 'Add your first teammate to start building your company directory.'}
+            </p>
+            {!searchTerm && selectedDept === 'All' && (
+              <button
+                onClick={handleOpenAddModal}
+                className="inline-flex items-center justify-center gap-1.5 bg-primary text-primary-foreground h-9 px-5 py-2 rounded-xl text-sm font-medium shadow-sm hover:bg-primary/90 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                Add First Employee
+              </button>
+            )}
+          </div>
+        ) : viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredEmployees.map((emp) => (
+              <div key={emp.id} className="card-elevated hover-lift overflow-hidden relative group">
+                <div className="h-16 bg-gradient-to-r from-blue-600 to-cyan-400"></div>
+                <div className="px-4 pb-4 -mt-8">
+                  <div className="flex items-end justify-between">
+                    <span className="relative flex h-16 w-16 shrink-0 overflow-hidden rounded-full ring-4 ring-card bg-background">
+                      {emp.avatar ? (
+                        <img className="aspect-square h-full w-full object-cover" src={emp.avatar} alt={emp.name} />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center rounded-full bg-muted font-bold">{emp.initials || 'EM'}</span>
+                      )}
+                    </span>
+                    <div className={`inline-flex items-center border font-semibold border-0 rounded-md text-[10px] px-2 py-0.5 ${emp.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                      {emp.status || 'Active'}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex gap-1.5">
-                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 flex-1 rounded-lg text-xs">
-                    View
-                  </button>
-                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-lg">
-                    <Mail className="h-3.5 w-3.5" />
-                  </button>
-                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-lg">
-                    <Phone className="h-3.5 w-3.5" />
-                  </button>
+                  </div>
+                  <div className="mt-3">
+                    <div className="font-semibold truncate text-foreground">{emp.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{emp.role} · {emp.department}</div>
+                  </div>
+                  <div className="mt-3 space-y-1 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Mail className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{emp.email}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      {emp.location || 'Remote'}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-1.5">
+                    <button
+                      onClick={() => handleOpenEditModal(emp)}
+                      className="inline-flex items-center justify-center gap-1.5 font-medium border border-input bg-background shadow-sm hover:bg-accent h-8 px-3 flex-1 rounded-lg text-xs cursor-pointer"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit Details
+                    </button>
+                    <button
+                      onClick={() => handleDelete(emp.id)}
+                      className="inline-flex items-center justify-center text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-input h-8 w-8 rounded-lg transition-colors cursor-pointer"
+                      title="Delete Employee"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="card-elevated overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-muted/50 text-xs uppercase text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-4 py-3">Employee</th>
+                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Department</th>
+                  <th className="px-4 py-3">Location</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredEmployees.map((emp) => (
+                  <tr key={emp.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 font-medium flex items-center gap-3">
+                      <img src={emp.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff&bold=true`} alt="" className="w-8 h-8 rounded-full bg-secondary object-cover" />
+                      <div>
+                        <div>{emp.name}</div>
+                        <div className="text-xs text-muted-foreground">{emp.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{emp.role}</td>
+                    <td className="px-4 py-3">{emp.department}</td>
+                    <td className="px-4 py-3">{emp.location || 'Remote'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 text-xs rounded-full ${emp.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                        {emp.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
+                      <button onClick={() => handleOpenEditModal(emp)} className="text-indigo-400 hover:text-indigo-300 p-1.5 rounded-lg hover:bg-indigo-500/10" title="Edit Employee">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(emp.id)} className="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10" title="Delete Employee">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {isAddModalOpen && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-foreground mb-1">
+                {editingEmployeeId ? 'Edit Employee Profile' : 'Add New Employee'}
+              </h2>
+              <p className="text-xs text-muted-foreground mb-6">
+                {editingEmployeeId ? 'Update employee photo and personal details.' : 'Enter official teammate details to register them in the system.'}
+              </p>
+
+              <form onSubmit={handleSaveEmployee} className="space-y-4">
+                <div className="flex items-center gap-4 p-3 bg-background/60 border border-border rounded-xl">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-secondary border border-border flex items-center justify-center shrink-0">
+                    {formData.avatar ? (
+                      <img src={formData.avatar} alt="Employee Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    )}
+                    {isUploadingPhoto && (
+                      <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-foreground mb-1">Employee Photo</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePhotoUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingPhoto}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary hover:bg-secondary/80 text-xs font-medium text-secondary-foreground rounded-lg transition-colors border border-border cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        {formData.avatar ? 'Change Photo' : 'Upload Photo'}
+                      </button>
+                      {formData.avatar && (
+                        <span className="text-[10px] font-semibold tracking-wide text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Photo Uploaded
+                        </span>
+                      )}
+                    </div>
+                    {uploadError && <p className="text-[11px] text-rose-400 mt-1">{uploadError}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Jane Doe"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="jane@company.com"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Role Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      placeholder="e.g. Frontend Lead"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Department</label>
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="">Select option</option>
+                      {deptOptions.map((d) => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Location</label>
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="e.g. San Francisco"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Team</label>
+                    <select
+                      value={formData.teamId}
+                      onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="">Select team</option>
+                      {teamOptions.map((t) => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Reports To (Manager)</label>
+                    <select
+                      value={formData.managerId}
+                      onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="">None</option>
+                      {managerOptions.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Level</label>
+                    <select
+                      value={formData.level}
+                      onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    >
+                      {LEVELS.map((l) => (
+                        <option key={l} value={l}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Terminated">Terminated</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">Skills (comma separated)</label>
+                  <input
+                    type="text"
+                    value={formData.skills}
+                    onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                    placeholder="React, TypeScript, GraphQL"
+                    className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+1 555 000 0000"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1">Birthday</label>
+                    <input
+                      type="date"
+                      value={formData.dob}
+                      onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-foreground mb-1">Work Anniversary (Join Date)</label>
+                  <input
+                    type="date"
+                    value={formData.joinDate}
+                    onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="pt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="px-4 py-2 border border-border text-foreground rounded-xl text-sm hover:bg-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-foreground font-medium rounded-xl text-sm shadow-lg shadow-indigo-600/30"
+                  >
+                    {isSubmitting ? 'Saving...' : 'Save Employee'}
+                  </button>
+                </div>
+              </form>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </main>
   );

@@ -32,3 +32,6 @@ img/
 .env
 .env.local
 .env.*.local
+# Secrets
+server/src/config/google-tokens.json
+server/src/config/service-account.json

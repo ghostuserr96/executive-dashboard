@@ -1,9 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
-// Replace these placeholders with your actual Firebase project config
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -14,11 +14,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
-
-// Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+export const rtdb = getDatabase(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+if (import.meta.env.DEV) {
+  console.info('[Firebase] Project:', firebaseConfig.projectId || 'missing');
+  console.info('[Firebase] Auth domain:', firebaseConfig.authDomain || 'missing');
+}

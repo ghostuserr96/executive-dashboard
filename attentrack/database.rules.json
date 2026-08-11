@@ -1,0 +1,369 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      ".indexOn": ["email", "role", "department"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$userId": {
+        ".validate": "newData.hasChildren(['id', 'name', 'email', 'password', 'role', 'department', 'avatar', 'createdAt']) && newData.child('id').val() !== null && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 100 && newData.child('email').isString() && newData.child('email').val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/) && newData.child('email').val() === newData.child('email').val().toLowerCase() && newData.child('password').isString() && newData.child('password').val().length >= 50 && newData.child('role').isString() && newData.child('role').val().length <= 50 && newData.child('department').isString() && newData.child('department').val().length <= 50 && newData.child('avatar').isString() && (newData.child('avatar').val().matches(/^https?:\\/\\//) || newData.child('avatar').val().length <= 500) && newData.child('createdAt').isString()",
+        "mustChangePassword": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    "employees": {
+      ".indexOn": ["email", "department", "status"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$employeeId": {
+        ".validate": "newData.hasChildren(['id', 'name', 'email', 'role', 'department', 'status']) && newData.child('id').val() !== null && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 100 && newData.child('email').isString() && newData.child('email').val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/) && newData.child('email').val() === newData.child('email').val().toLowerCase() && newData.child('role').isString() && newData.child('role').val().length <= 100 && newData.child('department').isString() && newData.child('department').val().length <= 50 && newData.child('status').isString() && (newData.child('status').val() === 'Active' || newData.child('status').val() === 'Inactive' || newData.child('status').val() === 'On Leave' || newData.child('status').val() === 'Terminated')",
+        "employeeId": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        },
+        "avatar": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 500)"
+        },
+        "joinedDate": {
+          ".validate": "newData.isString()"
+        },
+        "phone": {
+          ".validate": "newData.isString() && newData.val().length <= 30"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        }
+      }
+    },
+
+    "attendance": {
+      ".indexOn": ["employeeId", "userId", "date", "status"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$attendanceId": {
+        ".validate": "newData.hasChildren(['id', 'employeeId', 'userId', 'employeeName', 'date', 'timestamp', 'clockIn', 'status']) && newData.child('id').val() !== null && newData.child('employeeId').val() !== null && newData.child('userId').val() !== null && newData.child('employeeName').isString() && newData.child('employeeName').val().length >= 2 && newData.child('employeeName').val().length <= 100 && newData.child('date').isString() && newData.child('date').val().matches(/^\\d{4}-\\d{2}-\\d{2}$/) && newData.child('timestamp').isString() && newData.child('clockIn').isString() && (newData.child('status').val() === 'On Time' || newData.child('status').val() === 'Late' || newData.child('status').val() === 'Absent' || newData.child('status').val() === 'Half Day')",
+        "clockOut": {
+          ".validate": "newData.isString()"
+        },
+        "hoursWorked": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d+(\\.\\d+)?\\s?hrs$/)"
+        },
+        "imageUrl": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 500)"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "gpsCoordinates": {
+          ".validate": "newData.val() === null || (newData.hasChild('lat') && newData.hasChild('lng'))",
+          "lat": {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          "lng": {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          }
+        },
+        "method": {
+          ".validate": "newData.isString() && (newData.val() === 'Selfie' || newData.val() === 'GPS' || newData.val() === 'Manual' || newData.val() === 'QR')"
+        }
+      }
+    },
+
+    "leaves": {
+      ".indexOn": ["employeeId", "status"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$leaveId": {
+        ".validate": "newData.hasChildren(['id', 'employeeId', 'status', 'appliedOn', 'days']) && newData.child('id').val() !== null && newData.child('employeeId').val() !== null && newData.child('status').isString() && (newData.child('status').val() === 'Pending' || newData.child('status').val() === 'Approved' || newData.child('status').val() === 'Rejected') && newData.child('appliedOn').isString() && newData.child('days').isNumber() && newData.child('days').val() > 0 && newData.child('days').val() <= 365",
+        "employeeName": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100"
+        },
+        "leaveType": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "startDate": {
+          ".validate": "newData.isString()"
+        },
+        "endDate": {
+          ".validate": "newData.isString()"
+        },
+        "reason": {
+          ".validate": "newData.isString() && newData.val().length <= 1000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+
+    "tasks": {
+      ".indexOn": ["status", "priority", "assignedTo"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$taskId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'status', 'priority', 'progress', 'createdAt', 'updatedAt']) && newData.child('id').val() !== null && newData.child('title').isString() && newData.child('title').val().length >= 2 && newData.child('title').val().length <= 200 && newData.child('status').isString() && (newData.child('status').val() === 'To Do' || newData.child('status').val() === 'In Progress' || newData.child('status').val() === 'Review' || newData.child('status').val() === 'Done' || newData.child('status').val() === 'Blocked') && newData.child('priority').isString() && (newData.child('priority').val() === 'Low' || newData.child('priority').val() === 'Medium' || newData.child('priority').val() === 'High' || newData.child('priority').val() === 'Urgent') && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100 && newData.child('createdAt').isString() && newData.child('updatedAt').isString()",
+        "description": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "assignedTo": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "assignedToAvatar": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 500)"
+        },
+        "dueDate": {
+          ".validate": "newData.isString()"
+        },
+        "comments": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "attachments": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+
+    "announcements": {
+      ".indexOn": ["date", "department"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$announcementId": {
+        ".validate": "newData.hasChildren(['id', 'date']) && newData.child('id').val() !== null && newData.child('date').isString() && newData.child('date').val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)",
+        "title": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 200"
+        },
+        "message": {
+          ".validate": "newData.isString() && newData.val().length <= 5000"
+        },
+        "department": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "targetAudience": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "createdBy": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        }
+      }
+    },
+
+    "performance": {
+      ".indexOn": ["employeeId", "department", "reviewPeriod"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      ".write": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$reviewId": {
+        ".validate": "newData.hasChildren(['id', 'employeeId', 'overallScore', 'status', 'updatedAt']) && newData.child('id').val() !== null && newData.child('employeeId').val() !== null && newData.child('overallScore').isNumber() && newData.child('overallScore').val() >= 0 && newData.child('overallScore').val() <= 100 && newData.child('status').isString() && (newData.child('status').val() === 'Draft' || newData.child('status').val() === 'Completed' || newData.child('status').val() === 'Reviewed') && newData.child('updatedAt').isString()",
+        "employeeName": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100"
+        },
+        "department": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "reviewPeriod": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "goalCompletion": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "discipline": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "learning": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "leadership": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "communication": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "innovation": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "comments": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        }
+      }
+    },
+
+    "recruitmentJobs": {
+      ".indexOn": ["department", "status", "location", "employmentType", "slug"],
+      ".read": true,
+      "$jobId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'status', 'createdAt']) && (newData.child('id').isString() || newData.child('id').isNumber()) && newData.child('title').isString() && newData.child('title').val().length >= 2 && newData.child('title').val().length <= 200 && newData.child('status').isString() && (newData.child('status').val() === 'Active' || newData.child('status').val() === 'Closed' || newData.child('status').val() === 'Paused' || newData.child('status').val() === 'Draft') && newData.child('createdAt').isString()",
+        "slug": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]+$/) && newData.val().length <= 200"
+        },
+        "description": {
+          ".validate": "newData.isString() && newData.val().length <= 10000"
+        },
+        "requirements": {
+          ".validate": "newData.isString() && newData.val().length <= 5000"
+        },
+        "department": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "employmentType": {
+          ".validate": "newData.isString() && (newData.val() === 'Full-time' || newData.val() === 'Part-time' || newData.val() === 'Contract' || newData.val() === 'Internship' || newData.val() === 'Remote')"
+        },
+        "salary": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "driveFolderId": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "applicants": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "totalOpenings": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000"
+        },
+        "hired": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "progress": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "updatedAt": {
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+
+    "recruitmentApplicants": {
+      ".indexOn": ["jobId", "email", "status", "stage"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$applicantId": {
+        ".validate": "newData.hasChildren(['id', 'jobId', 'fullName', 'email', 'appliedAt', 'status', 'stage']) && newData.child('id').isString() && newData.child('id').val().length <= 20 && newData.child('jobId').val() !== null && newData.child('fullName').isString() && newData.child('fullName').val().length >= 2 && newData.child('fullName').val().length <= 100 && (newData.child('name').val() === null || (newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 100)) && newData.child('email').isString() && newData.child('email').val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/) && newData.child('email').val() === newData.child('email').val().toLowerCase() && newData.child('appliedAt').isString() && newData.child('status').isString() && (newData.child('status').val() === 'Applied' || newData.child('status').val() === 'Screening' || newData.child('status').val() === 'Interview' || newData.child('status').val() === 'Offer' || newData.child('status').val() === 'Hired' || newData.child('status').val() === 'Rejected' || newData.child('status').val() === 'Withdrawn') && newData.child('stage').isString() && (newData.child('stage').val() === 'Applied' || newData.child('stage').val() === 'Screening' || newData.child('stage').val() === 'Interview' || newData.child('stage').val() === 'Offer' || newData.child('stage').val() === 'Hired' || newData.child('stage').val() === 'Rejected' || newData.child('stage').val() === 'Withdrawn')",
+        "jobTitle": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "phone": {
+          ".validate": "newData.isString() && newData.val().length <= 30"
+        },
+        "qualification": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "experience": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "skills": {
+          ".validate": "newData.isString() && newData.val().length <= 500"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "portfolio": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 200)"
+        },
+        "linkedin": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 200)"
+        },
+        "github": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 200)"
+        },
+        "coverLetter": {
+          ".validate": "newData.isString() && newData.val().length <= 5000"
+        },
+        "resumeFileId": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "resumeLink": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 500)"
+        },
+        "matchScore": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "updatedAt": {
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+
+    "courses": {
+      ".indexOn": ["status", "category"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$courseId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'category', 'enrolled', 'lessonCount', 'status', 'createdAt', 'updatedAt']) && newData.child('id').isString() && newData.child('id').val().length <= 50 && newData.child('title').isString() && newData.child('title').val().length >= 2 && newData.child('title').val().length <= 200 && newData.child('category').isString() && newData.child('category').val().length <= 50 && newData.child('enrolled').isNumber() && newData.child('enrolled').val() >= 0 && newData.child('lessonCount').isNumber() && newData.child('lessonCount').val() >= 0 && newData.child('status').isString() && (newData.child('status').val() === 'Active' || newData.child('status').val() === 'Inactive' || newData.child('status').val() === 'Draft') && newData.child('createdAt').isString() && newData.child('updatedAt').isString()",
+        "description": {
+          ".validate": "newData.isString() && newData.val().length <= 5000"
+        },
+        "duration": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "badge": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "thumbnail": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 500)"
+        }
+      }
+    },
+
+    "lessons": {
+      ".indexOn": ["courseId", "order"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$lessonId": {
+        ".validate": "newData.hasChildren(['id', 'courseId', 'title', 'order', 'isFree', 'createdAt', 'updatedAt']) && newData.child('id').isString() && newData.child('id').val().length <= 50 && newData.child('courseId').isString() && newData.child('courseId').val().length <= 50 && newData.child('title').isString() && newData.child('title').val().length >= 2 && newData.child('title').val().length <= 200 && newData.child('order').isNumber() && newData.child('order').val() >= 0 && newData.child('order').val() <= 1000 && newData.child('isFree').isBoolean() && newData.child('createdAt').isString() && newData.child('updatedAt').isString()",
+        "description": {
+          ".validate": "newData.isString() && newData.val().length <= 5000"
+        },
+        "contentUrl": {
+          ".validate": "newData.isString() && (newData.val().matches(/^https?:\\/\\//) || newData.val().length <= 500)"
+        },
+        "resourceType": {
+          ".validate": "newData.isString() && (newData.val() === 'youtube' || newData.val() === 'drive' || newData.val() === 'pdf' || newData.val() === 'googledoc' || newData.val() === 'googleslides' || newData.val() === 'googlesheet' || newData.val() === 'loom' || newData.val() === 'link')"
+        }
+      }
+    },
+
+    "enrollments": {
+      ".indexOn": ["courseId", "employeeId", "progress", "certificateIssued"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$enrollmentId": {
+        ".validate": "newData.hasChildren(['id', 'courseId', 'employeeId', 'progress', 'certificateIssued', 'enrolledAt', 'updatedAt']) && newData.child('id').isString() && newData.child('id').val().length <= 50 && newData.child('courseId').isString() && newData.child('courseId').val().length <= 50 && newData.child('employeeId').val() !== null && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100 && newData.child('certificateIssued').isBoolean() && newData.child('enrolledAt').isString() && newData.child('updatedAt').isString()",
+        "employeeName": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100"
+        },
+        "completedAt": {
+          ".validate": "newData.isString() || newData.val() === null"
+        }
+      }
+    },
+
+    "recruitmentCandidates": {
+      ".indexOn": ["email", "status"],
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0",
+      "$candidateId": {
+        ".validate": "newData.hasChildren(['id', 'name', 'email']) && newData.child('id').val() !== null && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 100 && newData.child('email').isString() && newData.child('email').val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/) && newData.child('email').val() === newData.child('email').val().toLowerCase()"
+      }
+    },
+
+    "payroll": {
+      ".read": "auth != null && auth.uid != null && auth.token.is_anonymous !== true && auth.token.email != null && auth.token.email.length > 0"
+    },
+    
+    "presence": {
+      ".read": true,
+      ".write": true
+    },
+    "typing": {
+      ".read": true,
+      ".write": true
+    },
+    "channels": {
+      ".read": true,
+      ".write": true
+    },
+    "messages": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
