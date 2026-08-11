@@ -457,17 +457,20 @@ export default function Messaging() {
                 <EmptyState channelName={getDisplayName(activeChannel, user)} />
               ) : (
                 messages.map((msg) => {
+                  const isCurrentUser = String(msg.senderId) === String(user?.id) || msg.senderId === user?.email || msg.senderName === user?.name;
                   const senderEmp = employees?.find(e => 
                     String(e.id) === String(msg.senderId) || 
                     e.email === msg.senderId || 
                     e.name === msg.senderName
                   );
+                  const avatarToUse = isCurrentUser ? (user?.avatar || user?.photoURL || senderEmp?.avatar) : senderEmp?.avatar;
+                  
                   return (
                     <ChatMessage
                       key={msg.id}
                       message={msg}
                       currentUserId={user?.id ? String(user.id) : user?.email}
-                      senderAvatar={senderEmp?.avatar}
+                      senderAvatar={avatarToUse}
                     />
                   );
                 })
@@ -495,46 +498,6 @@ export default function Messaging() {
                   </div>
                 )}
                 <div className="relative flex items-center">
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
-                      className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
-                      title="Attach file"
-                      type="button"
-                    >
-                      <Paperclip className="w-4 h-4" />
-                    </button>
-                    {showAttachmentMenu && (
-                      <div className="absolute bottom-full left-0 mb-2 bg-card border border-border rounded-xl shadow-xl p-2 z-10 animate-in fade-in zoom-in-95 duration-150">
-                        <button
-                          onClick={() => {
-                            fileInputRef.current?.click();
-                            setShowAttachmentMenu(false);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-foreground hover:bg-muted rounded-lg transition-colors"
-                        >
-                          <Image className="w-4 h-4" /> Image
-                        </button>
-                        <button
-                          onClick={() => {
-                            fileInputRef.current?.click();
-                            setShowAttachmentMenu(false);
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-foreground hover:bg-muted rounded-lg transition-colors"
-                        >
-                          <FileText className="w-4 h-4" /> Document
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf,.docx,.xlsx,.csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
                   <input
                     type="text"
                     placeholder={`Message #${getDisplayName(activeChannel, user)}`}
@@ -546,7 +509,7 @@ export default function Messaging() {
                     }}
                     onKeyDown={handleKeyDown}
                     disabled={sending}
-                    className="w-full bg-background border border-border rounded-full pl-12 pr-12 py-3 text-[14px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-background border border-border rounded-full pl-5 pr-12 py-3 text-[14px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     onClick={handleSend}

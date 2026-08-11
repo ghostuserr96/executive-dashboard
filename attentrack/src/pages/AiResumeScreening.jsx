@@ -230,11 +230,11 @@ export default function AiResumeScreening() {
     const safe = Math.max(0, Math.min(100, value || 0));
     return (
       <div className="flex items-center gap-4 text-sm mb-3">
-        <span className="w-32 truncate text-slate-500 font-medium tracking-tight">{label}</span>
-        <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-          <div className="h-full bg-indigo-600 rounded-full transition-all duration-1000" style={{ width: `${safe}%` }}></div>
+        <span className="w-32 truncate text-muted-foreground font-medium tracking-tight">{label}</span>
+        <div className="flex-1 h-1.5 rounded-full bg-accent overflow-hidden">
+          <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${safe}%` }}></div>
         </div>
-        <strong className="w-12 text-right text-slate-700 font-bold">{safe.toFixed(1)}</strong>
+        <strong className="w-12 text-right text-foreground/90 font-bold">{safe.toFixed(1)}</strong>
       </div>
     );
   };
@@ -242,25 +242,25 @@ export default function AiResumeScreening() {
   const getCompareCandidate = (idx) => rankedCandidates[idx] || null;
 
   return (
-    <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50">
+    <main className="flex-1 min-w-0 overflow-y-auto bg-background">
       <div className="mx-auto max-w-5xl p-6 lg:p-10 space-y-10 animate-fade-in">
         
         <div>
-          <div className="text-[10px] font-bold tracking-[0.2em] text-indigo-500 uppercase mb-2">Recruitment</div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">AI Resume Screening</h1>
-          <p className="text-sm text-slate-500 mt-2 font-medium">
+          <div className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mb-2">Recruitment</div>
+          <h1 className="text-3xl font-bold tracking-tight text-card-foreground">AI Resume Screening</h1>
+          <p className="text-sm text-muted-foreground mt-2 font-medium">
             Screen tech candidates with explainable AI ranking and semantic skill matching.
           </p>
         </div>
 
         <div className="space-y-10">
           
-          <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 mb-6 pb-4 border-b border-slate-100">Job Context & Upload</h2>
+          <div className="bg-card p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/60">
+            <h2 className="text-lg font-bold text-card-foreground mb-6 pb-4 border-b border-border/60">Job Context & Upload</h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                <label className="block text-[10px] font-bold text-indigo-600 mb-3 uppercase tracking-widest">Auto-fill from Internal Jobs</label>
+              <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10">
+                <label className="block text-[10px] font-bold text-primary mb-3 uppercase tracking-widest">Auto-fill from Internal Jobs</label>
                 <CustomSelect 
                   options={[
                     { value: '', label: '-- Select an active job post --' },
@@ -295,12 +295,12 @@ export default function AiResumeScreening() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Job Title</label>
-                  <input required value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="e.g. Senior Frontend Developer" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all font-medium" />
+                  <label className="block text-xs font-bold text-foreground/90 mb-2 uppercase tracking-wide">Job Title</label>
+                  <input required value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="e.g. Senior Frontend Developer" className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-card-foreground text-sm focus:bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all font-medium" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Role Family</label>
+                  <label className="block text-xs font-bold text-foreground/90 mb-2 uppercase tracking-wide">Role Family</label>
                   <CustomSelect 
                     options={[
                       { value: "backend", label: "Backend" },
@@ -316,32 +316,32 @@ export default function AiResumeScreening() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Job Description</label>
-                <textarea rows="4" required value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="Paste job description..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none resize-none transition-all font-medium"></textarea>
+                <label className="block text-xs font-bold text-foreground/90 mb-2 uppercase tracking-wide">Job Description</label>
+                <textarea rows="4" required value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="Paste job description..." className="w-full px-4 py-3 bg-background border border-border rounded-xl text-card-foreground text-sm focus:bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none resize-none transition-all font-medium"></textarea>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Must-Have Skills</label>
-                  <input value={mustHave} onChange={e => setMustHave(e.target.value)} placeholder="react, tailwind" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all font-medium" />
+                  <label className="block text-xs font-bold text-foreground/90 mb-2 uppercase tracking-wide">Must-Have Skills</label>
+                  <input value={mustHave} onChange={e => setMustHave(e.target.value)} placeholder="react, tailwind" className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-card-foreground text-sm focus:bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all font-medium" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Nice-To-Have Skills</label>
-                  <input value={niceToHave} onChange={e => setNiceToHave(e.target.value)} placeholder="figma, nodejs" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all font-medium" />
+                  <label className="block text-xs font-bold text-foreground/90 mb-2 uppercase tracking-wide">Nice-To-Have Skills</label>
+                  <input value={niceToHave} onChange={e => setNiceToHave(e.target.value)} placeholder="figma, nodejs" className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-card-foreground text-sm focus:bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all font-medium" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Target Keywords (Elite Institutions, FAANG, Certifications)</label>
-                <input value={targetKeywords} onChange={e => setTargetKeywords(e.target.value)} placeholder="IIT, Google, AWS Certified" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all font-medium" />
+                <label className="block text-xs font-bold text-foreground/90 mb-2 uppercase tracking-wide">Target Keywords (Elite Institutions, FAANG, Certifications)</label>
+                <input value={targetKeywords} onChange={e => setTargetKeywords(e.target.value)} placeholder="IIT, Google, AWS Certified" className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-card-foreground text-sm focus:bg-card focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none transition-all font-medium" />
               </div>
 
               <div className="pt-4">
-                <div className="flex gap-2 p-1.5 bg-slate-100 rounded-xl w-max mb-6">
-                  <button type="button" onClick={() => setAnalysisMode('text')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${analysisMode === 'text' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                <div className="flex gap-2 p-1.5 bg-accent rounded-xl w-max mb-6">
+                  <button type="button" onClick={() => setAnalysisMode('text')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${analysisMode === 'text' ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground/90'}`}>
                     Paste Text
                   </button>
-                  <button type="button" onClick={() => setAnalysisMode('files')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${analysisMode === 'files' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                  <button type="button" onClick={() => setAnalysisMode('files')} className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${analysisMode === 'files' ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground/90'}`}>
                     Upload Files
                   </button>
                 </div>
@@ -349,19 +349,19 @@ export default function AiResumeScreening() {
                 {analysisMode === 'text' && (
                   <div className="space-y-4">
                     {candidates.map(candidate => (
-                      <div key={candidate.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 relative group">
-                        <button type="button" onClick={() => removeCandidate(candidate.id)} className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                      <div key={candidate.id} className="p-4 bg-background border border-border rounded-2xl space-y-4 relative group">
+                        <button type="button" onClick={() => removeCandidate(candidate.id)} className="absolute top-3 right-3 p-2 text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                         <div className="grid grid-cols-[1fr_120px] gap-4 pr-10">
-                          <input placeholder="Candidate Name" required value={candidate.name} onChange={e => updateCandidate(candidate.id, 'name', e.target.value)} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none font-medium" />
-                          <input type="number" min="0" step="0.5" placeholder="Years" required value={candidate.years_experience} onChange={e => updateCandidate(candidate.id, 'years_experience', e.target.value)} className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none font-medium" />
+                          <input placeholder="Candidate Name" required value={candidate.name} onChange={e => updateCandidate(candidate.id, 'name', e.target.value)} className="w-full px-4 py-2 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none font-medium" />
+                          <input type="number" min="0" step="0.5" placeholder="Years" required value={candidate.years_experience} onChange={e => updateCandidate(candidate.id, 'years_experience', e.target.value)} className="w-full px-4 py-2 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none font-medium" />
                         </div>
-                        <textarea rows="3" placeholder="Paste resume text..." required value={candidate.resume_text} onChange={e => updateCandidate(candidate.id, 'resume_text', e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none resize-none font-medium"></textarea>
+                        <textarea rows="3" placeholder="Paste resume text..." required value={candidate.resume_text} onChange={e => updateCandidate(candidate.id, 'resume_text', e.target.value)} className="w-full px-4 py-3 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none resize-none font-medium"></textarea>
                       </div>
                     ))}
                     
-                    <button type="button" onClick={addCandidate} className="w-full py-4 border-2 border-dashed border-slate-200 text-slate-500 hover:border-indigo-500 hover:text-indigo-600 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all hover:bg-indigo-50/50">
+                    <button type="button" onClick={addCandidate} className="w-full py-4 border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all hover:bg-primary/5">
                       <Plus className="w-4 h-4" /> Add Candidate
                     </button>
                   </div>
@@ -372,28 +372,28 @@ export default function AiResumeScreening() {
                     <input className="hidden" type="file" accept=".pdf,.docx,.txt" multiple ref={fileInputRef} onChange={handleFileChange} />
                     
                     <div 
-                      className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/30'}`}
+                      className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${isDragging ? 'border-indigo-500 bg-primary/10' : 'border-border bg-background hover:border-indigo-400 hover:bg-primary/10/30'}`}
                       onClick={() => fileInputRef.current?.click()}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                     >
-                      <Upload className={`w-10 h-10 mx-auto mb-4 ${isDragging ? 'text-indigo-500' : 'text-slate-400'}`} />
-                      <p className="font-bold text-slate-900 text-base">Drop resume files here or click to browse</p>
-                      <p className="text-sm text-slate-500 mt-2 font-medium">Supports PDF, DOCX, TXT. Details are auto-extracted.</p>
+                      <Upload className={`w-10 h-10 mx-auto mb-4 ${isDragging ? 'text-primary' : 'text-muted-foreground/70'}`} />
+                      <p className="font-bold text-card-foreground text-base">Drop resume files here or click to browse</p>
+                      <p className="text-sm text-muted-foreground mt-2 font-medium">Supports PDF, DOCX, TXT. Details are auto-extracted.</p>
                     </div>
                     
                     {selectedFiles.length > 0 && (
-                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <div className="p-4 bg-background rounded-2xl border border-border">
                         <div className="flex justify-between items-center mb-3">
-                          <p className="text-sm font-bold text-slate-900">{selectedFiles.length} file(s) selected</p>
+                          <p className="text-sm font-bold text-card-foreground">{selectedFiles.length} file(s) selected</p>
                           <button type="button" onClick={() => setSelectedFiles([])} className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors">Clear All</button>
                         </div>
-                        <ul className="text-sm text-slate-600 font-medium space-y-2">
+                        <ul className="text-sm text-foreground/80 font-medium space-y-2">
                           {selectedFiles.map((f, i) => (
-                            <li key={i} className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-100 shadow-sm">
+                            <li key={i} className="flex items-center justify-between bg-card px-3 py-2 rounded-lg border border-border/60 shadow-sm">
                               <span className="truncate pr-4">{f.name}</span>
-                              <button type="button" onClick={() => removeFile(i)} className="text-slate-400 hover:text-red-500 transition-colors p-1" title="Remove file">
+                              <button type="button" onClick={() => removeFile(i)} className="text-muted-foreground/70 hover:text-red-500 transition-colors p-1" title="Remove file">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </li>
@@ -403,7 +403,7 @@ export default function AiResumeScreening() {
                     )}
 
                     {previewStatus && (
-                      <div className="p-4 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-sm font-medium">
+                      <div className="p-4 bg-background text-foreground/90 border border-border rounded-xl text-sm font-medium">
                         {previewStatus}
                       </div>
                     )}
@@ -413,27 +413,27 @@ export default function AiResumeScreening() {
                         {profilePreviews.map((preview, i) => {
                           if (preview.status === "error") {
                             return (
-                              <div key={i} className="p-4 bg-red-50 border border-red-100 rounded-2xl">
-                                <h4 className="text-sm font-bold text-red-600">{preview.file_name}</h4>
+                              <div key={i} className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                                <h4 className="text-sm font-bold text-red-500">{preview.file_name}</h4>
                                 <p className="text-xs text-red-500 mt-1 font-medium">{preview.message || "Parse failed."}</p>
                               </div>
                             );
                           }
                           const skills = preview.detected_skills || [];
                           return (
-                            <div key={i} className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm transition-all hover:shadow-md">
-                              <h4 className="text-base font-bold text-slate-900 mb-1">{preview.candidate_name || preview.filename}</h4>
-                              <p className="text-xs text-slate-500 font-medium mb-4 flex items-center gap-2">
+                            <div key={i} className="p-5 bg-card border border-border/60 rounded-2xl shadow-sm transition-all hover:shadow-md">
+                              <h4 className="text-base font-bold text-card-foreground mb-1">{preview.candidate_name || preview.filename}</h4>
+                              <p className="text-xs text-muted-foreground font-medium mb-4 flex items-center gap-2">
                                 <span className="truncate max-w-[250px]">{preview.filename}</span> 
-                                <span className="text-slate-300">|</span> 
+                                <span className="text-muted-foreground/50">|</span> 
                                 <span>{preview.years_experience ?? 0} years detected</span>
                               </p>
                               <div className="flex flex-wrap gap-2">
                                 {skills.length ? skills.map((s, j) => (
-                                  <span key={j} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold tracking-wide uppercase">
+                                  <span key={j} className="px-3 py-1 bg-accent text-foreground/90 rounded-lg text-[11px] font-bold tracking-wide uppercase">
                                     {s}
                                   </span>
-                                )) : <span className="text-xs text-slate-400 italic">No keywords detected</span>}
+                                )) : <span className="text-xs text-muted-foreground/70 italic">No keywords detected</span>}
                               </div>
                             </div>
                           );
@@ -444,49 +444,49 @@ export default function AiResumeScreening() {
                 )}
               </div>
 
-              <div className="pt-6 border-t border-slate-100 flex justify-end">
-                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 h-12 px-8 rounded-xl font-bold shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] transition-all gap-2 text-sm w-full md:w-auto">
+              <div className="pt-6 border-t border-border/60 flex justify-end">
+                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center bg-primary text-white hover:bg-primary/90 disabled:opacity-50 h-12 px-8 rounded-xl font-bold shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] transition-all gap-2 text-sm w-full md:w-auto">
                   {isSubmitting ? 'Running Analysis...' : 'Run AI Screening'}
                 </button>
               </div>
             </form>
           </div>
 
-          <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 min-h-[400px]">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-6 mb-8">
-              <h2 className="text-xl font-bold text-slate-900">Leaderboard</h2>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{resultSubtitle}</span>
+          <div className="bg-card p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/60 min-h-[400px]">
+            <div className="flex items-center justify-between border-b border-border/60 pb-6 mb-8">
+              <h2 className="text-xl font-bold text-card-foreground">Leaderboard</h2>
+              <span className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest">{resultSubtitle}</span>
             </div>
 
             {statusBanner.message && (
-              <div className={`p-4 rounded-2xl border mb-8 text-sm font-bold ${statusBanner.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
+              <div className={`p-4 rounded-2xl border mb-8 text-sm font-bold ${statusBanner.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'}`}>
                 {statusBanner.message}
               </div>
             )}
 
             {rankedCandidates.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                <p className="text-base font-bold text-slate-900 mb-1">No results yet</p>
-                <p className="text-sm text-slate-500 font-medium">Use the form above to generate a shortlist.</p>
+              <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-border rounded-3xl bg-background/50">
+                <p className="text-base font-bold text-card-foreground mb-1">No results yet</p>
+                <p className="text-sm text-muted-foreground font-medium">Use the form above to generate a shortlist.</p>
               </div>
             ) : (
               <div className="space-y-6">
                 {rankedCandidates.map((candidate, index) => {
                   const passed = candidate.hard_constraint_passed;
                   return (
-                    <div key={index} className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                    <div key={index} className="bg-card border border-border rounded-3xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                       <div className={`absolute top-0 left-0 w-1.5 h-full ${passed ? 'bg-indigo-500' : 'bg-orange-400'}`}></div>
                       
                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 ml-2 gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-900 font-bold text-sm">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-card-foreground font-bold text-sm">
                             {index + 1}
                           </div>
-                          <h3 className="text-xl font-bold text-slate-900">
+                          <h3 className="text-xl font-bold text-card-foreground">
                             {candidate.name}
                           </h3>
                         </div>
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${passed ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>
+                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${passed ? 'bg-primary/10 text-primary border-primary/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}`}>
                           {passed ? "Hard Constraint Passed" : "Hard Constraint Risk"}
                         </span>
                       </div>
@@ -500,23 +500,23 @@ export default function AiResumeScreening() {
                         {renderScoreBar("Experience", candidate.experience_score)}
                       </div>
 
-                      <div className="ml-10 grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-slate-100 text-sm">
+                      <div className="ml-10 grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-border/60 text-sm">
                         <div>
-                          <strong className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Matched Skills</strong>
+                          <strong className="block text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Matched Skills</strong>
                           <div className="flex flex-wrap gap-2">
-                            {candidate.matched_skills?.length ? candidate.matched_skills.map((s, j) => <span key={j} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-slate-400 italic">None</span>}
+                            {candidate.matched_skills?.length ? candidate.matched_skills.map((s, j) => <span key={j} className="px-3 py-1.5 bg-accent text-foreground/90 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-muted-foreground/70 italic">None</span>}
                           </div>
                         </div>
                         <div>
-                          <strong className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Target Keywords Found</strong>
+                          <strong className="block text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Target Keywords Found</strong>
                           <div className="flex flex-wrap gap-2">
-                            {candidate.matched_target_keywords?.length ? candidate.matched_target_keywords.map((s, j) => <span key={j} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-slate-400 italic">None</span>}
+                            {candidate.matched_target_keywords?.length ? candidate.matched_target_keywords.map((s, j) => <span key={j} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-muted-foreground/70 italic">None</span>}
                           </div>
                         </div>
                         <div>
-                          <strong className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Missing Skills</strong>
+                          <strong className="block text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Missing Skills</strong>
                           <div className="flex flex-wrap gap-2">
-                            {candidate.missing_skills?.length ? candidate.missing_skills.map((s, j) => <span key={j} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-slate-400 italic">None</span>}
+                            {candidate.missing_skills?.length ? candidate.missing_skills.map((s, j) => <span key={j} className="px-3 py-1.5 bg-red-500/10 text-red-500 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-muted-foreground/70 italic">None</span>}
                           </div>
                         </div>
                       </div>
@@ -528,10 +528,10 @@ export default function AiResumeScreening() {
           </div>
 
           {rankedCandidates.length >= 2 && (
-            <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 pb-6 mb-8">
+            <div className="bg-card p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/60">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border/60 pb-6 mb-8">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">Candidate Comparison</h2>
+                  <h2 className="text-xl font-bold text-card-foreground">Candidate Comparison</h2>
                 </div>
                 
                 <div className="flex items-center gap-4">
@@ -540,7 +540,7 @@ export default function AiResumeScreening() {
                     value={compareAIdx}
                     onChange={(val) => setCompareAIdx(Number(val))}
                   />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">vs</span>
+                  <span className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">vs</span>
                   <CustomSelect 
                     options={rankedCandidates.map((c, idx) => ({ value: idx, label: c.name }))}
                     value={compareBIdx}
@@ -558,9 +558,9 @@ export default function AiResumeScreening() {
 
                 const getDiff = (valA, valB) => {
                   const diff = clampScore(valA) - clampScore(valB);
-                  if (diff > 0) return <span className="text-xs font-bold text-indigo-600 ml-3">(+{diff.toFixed(1)})</span>;
-                  if (diff < 0) return <span className="text-xs font-bold text-orange-600 ml-3">({diff.toFixed(1)})</span>;
-                  return <span className="text-xs font-bold text-slate-400 ml-3">(-)</span>;
+                  if (diff > 0) return <span className="text-xs font-bold text-primary ml-3">(+{diff.toFixed(1)})</span>;
+                  if (diff < 0) return <span className="text-xs font-bold text-orange-500 ml-3">({diff.toFixed(1)})</span>;
+                  return <span className="text-xs font-bold text-muted-foreground/70 ml-3">(-)</span>;
                 };
 
                 const matchedA = candA.matched_skills || [];
@@ -574,8 +574,8 @@ export default function AiResumeScreening() {
 
                 const renderMetric = (label, scoreA, scoreB) => (
                   <div className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
-                    <span className="text-sm font-medium text-slate-500">{label}</span>
-                    <div className="flex items-center text-sm font-bold text-slate-900">
+                    <span className="text-sm font-medium text-muted-foreground">{label}</span>
+                    <div className="flex items-center text-sm font-bold text-card-foreground">
                       {clampScore(scoreA).toFixed(1)}
                       {getDiff(scoreA, scoreB)}
                     </div>
@@ -586,8 +586,8 @@ export default function AiResumeScreening() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
                     {/* Candidate A Card */}
-                    <div className="p-8 bg-slate-50 border border-slate-100 rounded-3xl">
-                      <h4 className="text-xl font-bold text-slate-900 mb-6">{candA.name}</h4>
+                    <div className="p-8 bg-background border border-border/60 rounded-3xl">
+                      <h4 className="text-xl font-bold text-card-foreground mb-6">{candA.name}</h4>
                       
                       <div className="mb-8">
                         {renderMetric("Total Score", candA.total_score, candB.total_score)}
@@ -598,28 +598,28 @@ export default function AiResumeScreening() {
 
                       <div className="space-y-8">
                         <div>
-                          <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Unique Skills</h5>
+                          <h5 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Unique Skills</h5>
                           <div className="flex flex-wrap gap-2">
                             {uniqueA.length > 0 ? uniqueA.map((s, i) => (
-                              <span key={i} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[11px] font-bold tracking-wide uppercase shadow-sm">{s}</span>
-                            )) : <span className="text-xs text-slate-400 font-medium italic">None</span>}
+                              <span key={i} className="px-3 py-1.5 bg-card border border-border text-foreground/90 rounded-lg text-[11px] font-bold tracking-wide uppercase shadow-sm">{s}</span>
+                            )) : <span className="text-xs text-muted-foreground/70 font-medium italic">None</span>}
                           </div>
                         </div>
 
                         <div>
-                          <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Key Strengths</h5>
+                          <h5 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Key Strengths</h5>
                           <ul className="list-disc pl-4 space-y-2">
                             {strengthsA.length > 0 ? strengthsA.map((s, i) => (
-                              <li key={i} className="text-sm font-medium text-slate-700">{s}</li>
-                            )) : <li className="text-sm text-slate-400 font-medium italic">None identified</li>}
+                              <li key={i} className="text-sm font-medium text-foreground/90">{s}</li>
+                            )) : <li className="text-sm text-muted-foreground/70 font-medium italic">None identified</li>}
                           </ul>
                         </div>
                       </div>
                     </div>
 
                     {/* Candidate B Card */}
-                    <div className="p-8 bg-slate-50 border border-slate-100 rounded-3xl">
-                      <h4 className="text-xl font-bold text-slate-900 mb-6">{candB.name}</h4>
+                    <div className="p-8 bg-background border border-border/60 rounded-3xl">
+                      <h4 className="text-xl font-bold text-card-foreground mb-6">{candB.name}</h4>
                       
                       <div className="mb-8">
                         {renderMetric("Total Score", candB.total_score, candA.total_score)}
@@ -630,32 +630,32 @@ export default function AiResumeScreening() {
 
                       <div className="space-y-8">
                         <div>
-                          <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Unique Skills</h5>
+                          <h5 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Unique Skills</h5>
                           <div className="flex flex-wrap gap-2">
                             {uniqueB.length > 0 ? uniqueB.map((s, i) => (
-                              <span key={i} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[11px] font-bold tracking-wide uppercase shadow-sm">{s}</span>
-                            )) : <span className="text-xs text-slate-400 font-medium italic">None</span>}
+                              <span key={i} className="px-3 py-1.5 bg-card border border-border text-foreground/90 rounded-lg text-[11px] font-bold tracking-wide uppercase shadow-sm">{s}</span>
+                            )) : <span className="text-xs text-muted-foreground/70 font-medium italic">None</span>}
                           </div>
                         </div>
 
                         <div>
-                          <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Key Strengths</h5>
+                          <h5 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Key Strengths</h5>
                           <ul className="list-disc pl-4 space-y-2">
                             {strengthsB.length > 0 ? strengthsB.map((s, i) => (
-                              <li key={i} className="text-sm font-medium text-slate-700">{s}</li>
-                            )) : <li className="text-sm text-slate-400 font-medium italic">None identified</li>}
+                              <li key={i} className="text-sm font-medium text-foreground/90">{s}</li>
+                            )) : <li className="text-sm text-muted-foreground/70 font-medium italic">None identified</li>}
                           </ul>
                         </div>
                       </div>
                     </div>
 
                     {/* Shared Skills */}
-                    <div className="lg:col-span-2 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm mt-4">
-                      <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 text-center">Shared Skills</h5>
+                    <div className="lg:col-span-2 p-6 bg-card border border-border rounded-2xl shadow-sm mt-4">
+                      <h5 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-4 text-center">Shared Skills</h5>
                       <div className="flex flex-wrap justify-center gap-2">
                         {sharedSkills.length > 0 ? sharedSkills.map((s, i) => (
-                          <span key={i} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>
-                        )) : <span className="text-xs text-slate-400 font-medium italic">No shared skills</span>}
+                          <span key={i} className="px-3 py-1.5 bg-accent text-foreground/90 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>
+                        )) : <span className="text-xs text-muted-foreground/70 font-medium italic">No shared skills</span>}
                       </div>
                     </div>
 
