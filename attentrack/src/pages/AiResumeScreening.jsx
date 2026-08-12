@@ -3,7 +3,7 @@ import { Upload, Plus, Trash2 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import { CustomSelect } from '../components/common/CustomSelect';
 
-const DEFAULT_API_BASE = "http://127.0.0.1:8001";
+const DEFAULT_API_BASE = import.meta.env.VITE_AI_SERVER_URL || "http://127.0.0.1:8001";
 
 // Backend base URL (same env var as apiClient.js uses)
 const BACKEND_BASE_URL = (() => {
@@ -17,7 +17,7 @@ function getApiBaseUrl() {
   if (explicitBase) {
     return explicitBase.replace(/\/$/, "");
   }
-  return DEFAULT_API_BASE;
+  return DEFAULT_API_BASE.replace(/\/$/, "");
 }
 
 function apiUrl(path) {
