@@ -5,6 +5,13 @@ import { CustomSelect } from '../components/common/CustomSelect';
 
 const DEFAULT_API_BASE = "http://127.0.0.1:8001";
 
+// Backend base URL (same env var as apiClient.js uses)
+const BACKEND_BASE_URL = (() => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) return envUrl.endsWith('/v1') ? envUrl : `${envUrl}/v1`;
+  return 'http://localhost:5000/api/v1';
+})();
+
 function getApiBaseUrl() {
   const explicitBase = window.localStorage.getItem("talentrank_api_base");
   if (explicitBase) {
@@ -267,7 +274,7 @@ export default function AiResumeScreening() {
                     ...recruitmentJobs.map(job => ({ value: job.id, label: `${job.title} (${job.department})` }))
                   ]}
                   value={selectedJobId}
-                  onChange={(val) => {
+                  onChange={async (val) => {
                     setSelectedJobId(val);
                     const job = recruitmentJobs.find(j => String(j.id) === String(val));
                     if (job) {
@@ -277,15 +284,44 @@ export default function AiResumeScreening() {
                       
                       const applied = recruitmentCandidates.filter(c => String(c.jobId) === String(job.id));
                       if (applied.length > 0) {
-                        setAnalysisMode('text');
-                        setCandidates(applied.map(c => ({
-                          id: c.id,
-                          name: c.fullName || 'Unknown',
-                          years_experience: c.experience || '',
-                          resume_text: `Skills: ${c.skills || 'Not provided'}\n\nCover Letter: ${c.coverLetter || 'Not provided'}\n\nGoogle Drive Resume URL: ${c.resumeUrl || c.resumeLink || 'None'}`
-                        })));
+                        // Always switch to Upload Files mode — fetch resumes from Cloudinary via direct URL
+                        setAnalysisMode('files');
+                        setPreviewStatus('Fetching resumes from cloud...');
+                        const fileObjs = [];
+                        
+                        for (const c of applied) {
+                          try {
+                            if (c.base64File) {
+                              // In-memory base64 (rare case)
+                              const res = await fetch(c.base64File);
+                              const blob = await res.blob();
+                              const file = new File([blob], `${(c.fullName || 'Candidate').replace(/\s+/g, '_')}_Resume.pdf`, { 
+                                type: c.mimeType || blob.type || 'application/pdf' 
+                              });
+                              fileObjs.push(file);
+                            } else if (c.resumeLink) {
+                              // Fetch PDF directly from Cloudinary (public URL)
+                              const response = await fetch(c.resumeLink);
+                              if (response.ok) {
+                                const blob = await response.blob();
+                                const isDataUrl = c.resumeLink.startsWith('data:');
+                                const nameParts = isDataUrl ? null : c.resumeLink.split('/').pop();
+                                const file = new File([blob], nameParts || `${(c.fullName || 'Candidate').replace(/\s+/g, '_')}_Resume.pdf`, { 
+                                  type: blob.type || 'application/pdf' 
+                                });
+                                fileObjs.push(file);
+                              }
+                            }
+                          } catch (err) {
+                            console.error('Failed to fetch resume:', err);
+                          }
+                        }
+                        
+                        setSelectedFiles(fileObjs);
+                        setPreviewStatus('');
                       } else {
                         setCandidates([]);
+                        setSelectedFiles([]);
                       }
                     }
                   }}
@@ -349,16 +385,37 @@ export default function AiResumeScreening() {
                 {analysisMode === 'text' && (
                   <div className="space-y-4">
                     {candidates.map(candidate => (
-                      <div key={candidate.id} className="p-4 bg-background border border-border rounded-2xl space-y-4 relative group">
-                        <button type="button" onClick={() => removeCandidate(candidate.id)} className="absolute top-3 right-3 p-2 text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <div className="grid grid-cols-[1fr_120px] gap-4 pr-10">
-                          <input placeholder="Candidate Name" required value={candidate.name} onChange={e => updateCandidate(candidate.id, 'name', e.target.value)} className="w-full px-4 py-2 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none font-medium" />
-                          <input type="number" min="0" step="0.5" placeholder="Years" required value={candidate.years_experience} onChange={e => updateCandidate(candidate.id, 'years_experience', e.target.value)} className="w-full px-4 py-2 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none font-medium" />
+                      candidate.isAutoLoaded ? (
+                        <div key={candidate.id} className="p-5 bg-card border border-border/60 rounded-2xl shadow-sm transition-all hover:shadow-md relative group">
+                          <button type="button" onClick={() => removeCandidate(candidate.id)} className="absolute top-4 right-4 p-2 text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <h4 className="text-base font-bold text-card-foreground mb-1">{candidate.name}</h4>
+                          <p className="text-xs text-muted-foreground font-medium mb-4 flex items-center gap-2">
+                            <span className="truncate max-w-[250px]">{candidate.raw_filename}</span> 
+                            <span className="text-muted-foreground/50">|</span> 
+                            <span>{candidate.years_experience || '0'}</span>
+                          </p>
+                          {candidate.raw_skills && (
+                            <div className="flex flex-wrap gap-1.5 mb-1 pr-10">
+                              {splitCommaValues(candidate.raw_skills).map((s, j) => (
+                                <span key={j} className="px-2 py-1 bg-primary/10 text-primary border border-primary/20 rounded-md text-[10px] font-bold uppercase tracking-wider">{s}</span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <textarea rows="3" placeholder="Paste resume text..." required value={candidate.resume_text} onChange={e => updateCandidate(candidate.id, 'resume_text', e.target.value)} className="w-full px-4 py-3 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none resize-none font-medium"></textarea>
-                      </div>
+                      ) : (
+                        <div key={candidate.id} className="p-4 bg-background border border-border rounded-2xl space-y-4 relative group">
+                          <button type="button" onClick={() => removeCandidate(candidate.id)} className="absolute top-3 right-3 p-2 text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <div className="grid grid-cols-[1fr_120px] gap-4 pr-10">
+                            <input placeholder="Candidate Name" required value={candidate.name} onChange={e => updateCandidate(candidate.id, 'name', e.target.value)} className="w-full px-4 py-2 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none font-medium" />
+                            <input type="number" min="0" step="0.5" placeholder="Years" required value={candidate.years_experience} onChange={e => updateCandidate(candidate.id, 'years_experience', e.target.value)} className="w-full px-4 py-2 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none font-medium" />
+                          </div>
+                          <textarea rows="3" placeholder="Paste resume text..." required value={candidate.resume_text} onChange={e => updateCandidate(candidate.id, 'resume_text', e.target.value)} className="w-full px-4 py-3 bg-card border border-border rounded-xl text-card-foreground text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none resize-none font-medium"></textarea>
+                        </div>
+                      )
                     ))}
                     
                     <button type="button" onClick={addCandidate} className="w-full py-4 border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary rounded-2xl flex items-center justify-center gap-2 text-sm font-bold transition-all hover:bg-primary/5">

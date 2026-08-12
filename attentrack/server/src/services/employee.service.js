@@ -1,6 +1,7 @@
 import { EmployeeModel } from '../models/Employee.js';
 import { UserModel } from '../models/User.model.js';
 import { rtdb } from '../config/db.js';
+import { deleteFromCloudinary } from './cloudinary.js';
 import { ApiError } from '../utils/ApiError.js';
 import { HTTP_STATUS } from '../constants/httpStatusCodes.js';
 
@@ -79,10 +80,28 @@ export class EmployeeService {
   }
 
   static async deleteEmployee(id) {
+    // Fetch employee first to clean up Cloudinary avatar
+    let employee = null;
+    try { employee = await EmployeeModel.findById(id); } catch (_) {}
+
     const success = await EmployeeModel.delete(id);
     if (!success) {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, `Employee with ID ${id} not found`);
     }
+
+    // Clean up avatar from Cloudinary if it's a Cloudinary URL
+    if (employee?.avatar && employee.avatar.includes('res.cloudinary.com')) {
+      try {
+        // Extract publicId from URL: https://res.cloudinary.com/<cloud>/image/upload/v<ver>/<publicId>.<ext>
+        const match = employee.avatar.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-z]+)?$/);
+        if (match && match[1]) {
+          await deleteFromCloudinary(match[1], 'image');
+        }
+      } catch (err) {
+        console.warn(`[EmployeeService] Could not delete avatar from Cloudinary: ${err.message}`);
+      }
+    }
+
     return true;
   }
 }

@@ -111,7 +111,7 @@ export default function Recruitment() {
     ];
   }, [recruitmentJobs, recruitmentCandidates]);
 
-  // Stage Movement Handler (Auto-cleans Drive resume when candidate reaches Hire or Reject stage)
+  // Stage Movement Handler (Auto-cleans Cloudinary resume when candidate reaches Hire or Reject stage)
   const handleMoveStage = async (candId, newStage) => {
     try {
       const isFinalStage = (newStage === 'Hire' || newStage === 'Reject');
@@ -121,7 +121,7 @@ export default function Recruitment() {
         setSelectedCandidate(prev => ({ ...prev, stage: newStage, status: newStage }));
       }
       if (isFinalStage) {
-        setSuccessMsg(`Candidate stage updated to '${newStage}'! Google Drive resume file cleaned up automatically.`);
+        setSuccessMsg(`Candidate stage updated to '${newStage}'! Resume file cleaned up automatically.`);
         setTimeout(() => setSuccessMsg(''), 7000);
       }
     } catch (err) {
@@ -129,16 +129,16 @@ export default function Recruitment() {
     }
   };
 
-  // Delete Candidate & Clean Up Drive Resume
+  // Delete Candidate & Clean Up Resume
   const handleDeleteCandidate = async (candId, candName) => {
-    if (!window.confirm(`Are you sure you want to delete applicant "${candName}"? Their application record and Google Drive resume file will both be permanently deleted.`)) return;
+    if (!window.confirm(`Are you sure you want to delete applicant "${candName}"? Their application record and resume will both be permanently deleted.`)) return;
     try {
       await recruitmentService.deleteCandidate(candId);
       await refreshAll();
       if (selectedCandidate && String(selectedCandidate.id) === String(candId)) {
         setSelectedCandidate(null);
       }
-      setSuccessMsg(`Candidate "${candName}" and Google Drive resume file deleted successfully.`);
+      setSuccessMsg(`Candidate "${candName}" and resume file deleted successfully.`);
       setTimeout(() => setSuccessMsg(''), 7000);
     } catch (err) {
       alert('Failed deleting candidate: ' + (err.message || 'Error'));
@@ -182,7 +182,7 @@ export default function Recruitment() {
 
   // Delete Job Handler
   const handleDeleteJob = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job posting? Associated Google Drive folders will also be cleaned up.')) return;
+    if (!window.confirm('Are you sure you want to delete this job posting? All associated candidate data will also be cleaned up.')) return;
     try {
       await recruitmentService.deleteJob(jobId);
       await refreshAll();
@@ -461,7 +461,7 @@ export default function Recruitment() {
                               </select>
                               <button
                                 type="button"
-                                title="Delete candidate & clean up Google Drive resume"
+                                title="Delete candidate & clean up resume"
                                 onClick={() => handleDeleteCandidate(cand.id, candName)}
                                 className="p-1 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                               >
@@ -623,14 +623,14 @@ export default function Recruitment() {
 
                 {(selectedCandidate.resumeUrl || selectedCandidate.resumeLink) && (
                   <div>
-                    <span className="font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Google Drive Resume</span>
+                    <span className="font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Resume</span>
                     <a
                       href={selectedCandidate.resumeUrl || selectedCandidate.resumeLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl font-bold text-xs transition-all mt-0.5 cursor-pointer"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" /> View Resume on Google Drive
+                      <ExternalLink className="w-3.5 h-3.5" /> View Resume
                     </a>
                   </div>
                 )}
@@ -737,18 +737,19 @@ export default function Recruitment() {
                       className="w-full px-3.5 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-primary focus:outline-none h-[40px]"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Employment Type</label>
-                    <select
+                  <div className="z-20">
+                    <CustomSelect
+                      label="Employment Type"
                       value={jobFormData.employmentType}
-                      onChange={(e) => setJobFormData({ ...jobFormData, employmentType: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-xs focus:border-primary focus:outline-none h-[40px]"
-                    >
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
-                    </select>
+                      onChange={(val) => setJobFormData({ ...jobFormData, employmentType: val })}
+                      options={[
+                        { label: 'Full-time', value: 'Full-time' },
+                        { label: 'Part-time', value: 'Part-time' },
+                        { label: 'Contract', value: 'Contract' },
+                        { label: 'Internship', value: 'Internship' }
+                      ]}
+                      className="h-[40px] bg-background"
+                    />
                   </div>
                 </div>
 

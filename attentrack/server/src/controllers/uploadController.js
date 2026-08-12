@@ -15,6 +15,7 @@ const saveDocumentMeta = async (docData) => {
     size: docData.size || 0,
     url: docData.url || '',
     publicId: docData.publicId || '',
+    resourceType: docData.resourceType || 'image',
     mimeType: docData.mimeType || '',
     uploadedBy: docData.uploadedBy || '',
     uploadedByName: docData.uploadedByName || '',
@@ -50,6 +51,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
       size: req.file?.size || 0,
       url: uploadResult.url,
       publicId: uploadResult.publicId,
+      resourceType: uploadResult.resourceType || 'image',
       mimeType: req.file?.mimetype || 'image/jpeg',
       uploadedBy: req.body?.uploadedBy || '',
       uploadedByName: req.body?.uploadedByName || '',
@@ -59,26 +61,8 @@ export const uploadImage = asyncHandler(async (req, res) => {
       new ApiResponse(HTTP_STATUS.OK, { ...uploadResult, document: docMeta }, 'Image uploaded successfully')
     );
   } catch (error) {
-    console.warn(`[UploadController] Cloudinary fallback triggered: ${error.message}`);
-    const docMeta = await saveDocumentMeta({
-      name: req.body?.name || req.file?.originalname || 'uploaded_image',
-      folder: req.body?.folder || 'General',
-      size: req.file?.size || 0,
-      url: fileData,
-      publicId: 'local_fallback',
-      mimeType: req.file?.mimetype || 'image/jpeg',
-      uploadedBy: req.body?.uploadedBy || '',
-      uploadedByName: req.body?.uploadedByName || '',
-      description: req.body?.description || ''
-    });
-    return res.status(HTTP_STATUS.OK).json(
-      new ApiResponse(HTTP_STATUS.OK, {
-        url: fileData,
-        publicId: 'local_fallback',
-        document: docMeta,
-        warning: `Cloudinary notice: ${error.message}. Saved using local image data.`
-      }, 'Image stored successfully')
-    );
+    console.error(`[UploadController] Cloudinary upload failed: ${error.message}`);
+    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, `Failed to upload image to Cloudinary: ${error.message}`);
   }
 });
 

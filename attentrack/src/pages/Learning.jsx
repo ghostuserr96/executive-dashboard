@@ -612,7 +612,7 @@ export default function Learning() {
           <div className="w-full max-w-lg bg-card border border-border rounded-3xl p-6 shadow-2xl relative animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <button onClick={()=>{setShowLessonModal(false);setEditLesson(null);}} className="absolute top-4 right-4 p-1.5 text-muted-foreground hover:bg-muted rounded-full cursor-pointer"><X className="w-5 h-5"/></button>
             <h2 className="text-xl font-bold text-foreground mb-1">{editLesson ? 'Edit Lesson' : 'Add Lesson'}</h2>
-            <p className="text-xs text-muted-foreground mb-5">Paste any URL — YouTube, Google Drive, Loom, PDF, Notion, Google Docs...</p>
+            <p className="text-xs text-muted-foreground mb-5">Paste any URL — YouTube, Loom, PDF, Notion...</p>
             <form onSubmit={saveLesson} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Lesson Title *</label>
@@ -620,13 +620,12 @@ export default function Learning() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Resource URL</label>
-                <input value={lessonForm.contentUrl} onChange={e=>setLessonForm({...lessonForm,contentUrl:e.target.value})} placeholder="https://youtu.be/... or https://drive.google.com/..." className="w-full px-3.5 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-primary focus:outline-none font-mono"/>
+                <input value={lessonForm.contentUrl} onChange={e=>setLessonForm({...lessonForm,contentUrl:e.target.value})} placeholder="https://youtu.be/... or https://loom.com/..." className="w-full px-3.5 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-primary focus:outline-none font-mono"/>
                 {lessonForm.contentUrl && (
                   <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
                     <ResourceIcon type={detectType(lessonForm.contentUrl)} className="w-3.5 h-3.5"/>
                     Detected: <span className="font-semibold text-foreground">{detectType(lessonForm.contentUrl)}</span>
                     {getYoutubeEmbed(lessonForm.contentUrl) && ' · Will embed as video'}
-                    {getDriveEmbed(lessonForm.contentUrl) && ' · Will embed from Drive'}
                   </p>
                 )}
               </div>

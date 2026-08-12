@@ -1,5 +1,5 @@
 import { RecruitmentModel, slugify } from '../models/Recruitment.js';
-import { createJobFolder, deleteJobFolderWithContents, uploadResumeBufferToDrive, deleteFileFromDrive } from '../services/google/googleDrive.js';
+import { uploadResumeToCloudinay, deleteResumeFromCloudinary } from '../services/cloudinary.js';
 
 
 export const getJobs = async (req, res, next) => {
@@ -35,23 +35,13 @@ export const createJob = async (req, res, next) => {
 
     const jobSlug = req.body.slug || slugify(title);
 
-    // Step 1: Create initial Job in Database
-    let newJob = await RecruitmentModel.createJob({
+    const newJob = await RecruitmentModel.createJob({
       ...req.body,
       slug: jobSlug,
       requirements: requirements || 'Relevant experience and proficiency in target skill set.',
       employmentType: employmentType || 'Full-time',
       salary: salary || 'Competitive'
     });
-
-    // Step 2: Automatically create Google Drive folder: HRMS Recruitment/<Job Title>/
-    try {
-      console.log(`[Recruitment Controller] Creating Google Drive folder for job '${title}'...`);
-      const driveFolderId = await createJobFolder(title);
-      newJob = await RecruitmentModel.updateJob(newJob.id, { driveFolderId });
-    } catch (gErr) {
-      console.warn(`[Recruitment Controller] Drive folder creation warning: ${gErr.message}`);
-    }
 
     res.status(201).json({
       success: true,
@@ -72,17 +62,8 @@ export const deleteJob = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Job posting not found' });
     }
 
-    // Clean up Google Drive folder if associated
-    try {
-      if (job.driveFolderId) {
-        await deleteJobFolderWithContents(job.driveFolderId);
-      }
-    } catch (gErr) {
-      console.warn(`[Recruitment Controller] Notice during Google Drive item cleanup: ${gErr.message}`);
-    }
-
     await RecruitmentModel.deleteJob(jobId);
-    res.json({ success: true, message: 'Job posting and associated Google Drive folder deleted successfully' });
+    res.json({ success: true, message: 'Job posting deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -218,18 +199,11 @@ export const submitPublicApplication = async (req, res, next) => {
       });
     }
 
-    // Format Drive Resume File Name: John Doe.pdf
+    // Format file name: "Virat Kohli.pdf"
     const sanitizedCandidateName = applicantName.replace(/[^a-zA-Z0-9 ]/g, '').trim() || 'Candidate';
-    const driveFileName = `${sanitizedCandidateName}.${ext}`;
 
-    // 6. Direct Google Drive Upload to HRMS Recruitment / <Job Title> / <John_Doe_Resume.pdf>
-    const driveResult = await uploadResumeBufferToDrive({
-      buffer: fileBuffer,
-      fileName: driveFileName,
-      mimeType: fileMime,
-      jobTitle: job.title,
-      folderId: job.driveFolderId
-    });
+    // 6. Upload resume to Cloudinary (stored as resumes/virat_kohli.pdf)
+    const cloudinaryResult = await uploadResumeToCloudinay(fileBuffer, sanitizedCandidateName, ext);
 
     // 7. Store Applicant in Firebase / Firestore
     const newApplicantData = {
@@ -247,8 +221,8 @@ export const submitPublicApplication = async (req, res, next) => {
       linkedin: linkedin || '',
       github: github || '',
       coverLetter: coverLetter || resumeSummary || '',
-      resumeFileId: driveResult.resumeFileId,
-      resumeLink: driveResult.resumeLink,
+      resumeFileId: cloudinaryResult.resumeFileId,
+      resumeLink:   cloudinaryResult.resumeLink,
       status: 'Applied',
       stage: 'Applied',
       appliedAt: new Date().toISOString()
@@ -287,19 +261,19 @@ export const updateCandidateStage = async (req, res, next) => {
     const updated = await RecruitmentModel.updateCandidateStage(req.params.id, stage);
     if (!updated) return res.status(404).json({ success: false, message: 'Candidate not found' });
 
-    // Automatic Drive resume cleanup when candidate process completes (Hire or Reject or cleanResume flag)
+    // Automatic Cloudinary resume cleanup when candidate process completes
     let resumeDeleted = false;
     if (cleanResume || stage === 'Hire' || stage === 'Hired' || stage === 'Reject') {
-      const fileTarget = updated.resumeFileId || updated.resumeLink || updated.resumeUrl;
-      if (fileTarget) {
-        console.log(`[Recruitment Controller] Process complete (${stage}). Cleaning up Drive resume for candidate '${updated.fullName || updated.name}'...`);
-        resumeDeleted = await deleteFileFromDrive(fileTarget);
+      const publicId = updated.resumeFileId;
+      if (publicId) {
+        console.log(`[Recruitment Controller] Process complete (${stage}). Cleaning up Cloudinary resume for '${updated.fullName || updated.name}'...`);
+        resumeDeleted = await deleteResumeFromCloudinary(publicId);
       }
     }
 
     res.json({
       success: true,
-      message: `Candidate stage updated to '${stage}'${resumeDeleted ? ' & Google Drive resume cleaned up' : ''}`,
+      message: `Candidate stage updated to '${stage}'${resumeDeleted ? ' & Cloudinary resume cleaned up' : ''}`,
       data: updated,
       resumeDeleted
     });
@@ -317,20 +291,38 @@ export const deleteCandidate = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Candidate not found' });
     }
 
-    // Clean up candidate's resume from Google Drive
-    const fileTarget = deletedCandidate.resumeFileId || deletedCandidate.resumeLink || deletedCandidate.resumeUrl;
+    // Clean up candidate's resume from Cloudinary
+    const publicId = deletedCandidate.resumeFileId;
     let resumeDeleted = false;
-    if (fileTarget) {
-      console.log(`[Recruitment Controller] Deleting candidate record. Cleaning up Drive resume for '${deletedCandidate.fullName || deletedCandidate.name}'...`);
-      resumeDeleted = await deleteFileFromDrive(fileTarget);
+    if (publicId) {
+      console.log(`[Recruitment Controller] Deleting candidate. Cleaning up Cloudinary resume for '${deletedCandidate.fullName || deletedCandidate.name}'...`);
+      resumeDeleted = await deleteResumeFromCloudinary(publicId);
     }
 
     res.json({
       success: true,
-      message: `Candidate record${resumeDeleted ? ' and Google Drive resume' : ''} deleted successfully`,
+      message: `Candidate record${resumeDeleted ? ' and Cloudinary resume' : ''} deleted successfully`,
       resumeDeleted
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const downloadCandidateResume = async (req, res, next) => {
+  try {
+    const { fileId } = req.params;
+    // fileId is the Cloudinary public_id e.g. "resumes/virat_kohli"
+    // The resumeLink stored in DB is already a direct HTTPS URL — just redirect to it
+    const candidate = await RecruitmentModel.findApplicantByFileId(fileId);
+    if (candidate && candidate.resumeLink) {
+      return res.redirect(candidate.resumeLink);
+    }
+    return res.status(404).json({ success: false, message: 'Resume not found' });
+  } catch (error) {
+    console.error('[Cloudinary] Error fetching resume link:', error.message);
     next(error);
   }
 };

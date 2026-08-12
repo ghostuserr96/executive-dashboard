@@ -8,7 +8,8 @@ import {
   createCandidate,
   updateCandidateStage,
   deleteCandidate,
-  submitPublicApplication
+  submitPublicApplication,
+  downloadCandidateResume
 } from '../controllers/recruitmentController.js';
 
 const router = Router();
@@ -49,7 +50,9 @@ router.delete('/jobs/:id', deleteJob);
 // Public Applicant Submission Endpoints
 router.post('/public/apply/:slug', rateLimitSubmissions, submitPublicApplication);
 router.post('/public/apply', rateLimitSubmissions, submitPublicApplication);
-router.post('/apply', rateLimitSubmissions, submitPublicApplication);
+
+// Resume Download Endpoint
+router.get('/public/resume/:fileId', downloadCandidateResume);
 
 // HR Candidates & Pipeline Endpoints
 router.get('/candidates', getCandidates);

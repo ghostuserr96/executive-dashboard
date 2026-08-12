@@ -1,5 +1,6 @@
 import { DocumentService } from '../services/document.service.js';
 import { uploadToCloudinary } from '../utils/cloudinaryUploader.js';
+import { deleteFromCloudinary } from '../services/cloudinary.js';
 import { rtdb } from '../config/db.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
@@ -16,6 +17,7 @@ const saveDocumentMeta = async (docData) => {
     size: docData.size || 0,
     url: docData.url || '',
     publicId: docData.publicId || '',
+    resourceType: docData.resourceType || 'image',   // store for correct Cloudinary deletion
     mimeType: docData.mimeType || '',
     uploadedBy: docData.uploadedBy || '',
     uploadedByName: docData.uploadedByName || '',
@@ -66,8 +68,8 @@ export const createDocument = asyncHandler(async (req, res) => {
   try {
     uploadResult = await uploadToCloudinary(fileData, folder);
   } catch (cloudErr) {
-    console.warn('[DocumentController] Cloudinary upload failed, storing as local data:', cloudErr.message);
-    uploadResult = { url: fileData, publicId: 'local_fallback' };
+    console.error('[DocumentController] Cloudinary upload failed:', cloudErr.message);
+    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, `Failed to upload document to Cloudinary: ${cloudErr.message}`);
   }
 
   const docData = {
@@ -76,6 +78,7 @@ export const createDocument = asyncHandler(async (req, res) => {
     size: req.body.size || 0,
     url: uploadResult.url,
     publicId: uploadResult.publicId || 'local_fallback',
+    resourceType: uploadResult.resourceType || 'raw',   // store actual resource type
     mimeType: req.body.mimeType || 'application/octet-stream',
     uploadedBy: req.body.uploadedBy || '',
     uploadedByName: req.body.uploadedByName || '',
@@ -92,6 +95,21 @@ export const updateDocument = asyncHandler(async (req, res) => {
 });
 
 export const deleteDocument = asyncHandler(async (req, res) => {
+  // Fetch doc first to get publicId + resourceType for Cloudinary cleanup
+  let doc = null;
+  try {
+    doc = await DocumentService.getDocumentById(req.params.id);
+  } catch (_) {
+    // If not found, deleteDocument below will throw 404
+  }
+
   await DocumentService.deleteDocument(req.params.id);
+
+  // After DB + Pinecone deletion, remove the file from Cloudinary
+  if (doc && doc.publicId && doc.publicId !== 'local_fallback') {
+    const resType = doc.resourceType || 'raw'; // use stored type, default raw for docs
+    await deleteFromCloudinary(doc.publicId, resType);
+  }
+
   res.status(HTTP_STATUS.OK).json(new ApiResponse(HTTP_STATUS.OK, null, 'Document deleted successfully'));
 });
