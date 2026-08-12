@@ -8,10 +8,10 @@ class ChunkingService {
 
   async createLLMChunks(textData, baseMetadata) {
     console.log(`[ChunkingService] Starting LLM-based chunking...`);
-    
+
     // Inject page markers into the raw text so Gemini/OpenAI knows the page numbers
     const fullText = textData.map(t => `--- PAGE ${t.page_number} ---\n${t.text}`).join('\n\n');
-    
+
     // Safety check for massive documents (fallback to old chunker if > 500k chars)
     if (fullText.length > 500000) {
       console.warn(`[ChunkingService] Document too large for LLM chunking (${fullText.length} chars), falling back to character chunker.`);
@@ -20,11 +20,11 @@ class ChunkingService {
 
     let ai;
     let modelName;
-    
+
     const groqKey = process.env.GROQ_RAG_API_KEY || process.env.GROQ_API_KEY;
     if (groqKey) {
       ai = new OpenAI({ apiKey: groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      modelName = "llama3-8b-8192"; // 30K TPM — supports larger documents
+      modelName = "llama3-70b-8192"; // 30K TPM — supports larger documents
     } else if (process.env.OPENAI_API_KEY) {
       ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       modelName = "gpt-4o-mini";
@@ -76,7 +76,7 @@ ${fullText}
     });
 
     let responseText = result.choices[0].message.content.trim();
-    
+
     // Strip markdown code blocks if present
     if (responseText.startsWith("\`\`\`")) {
       const lines = responseText.split("\\n");
