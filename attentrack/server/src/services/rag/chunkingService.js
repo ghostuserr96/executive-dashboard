@@ -24,7 +24,7 @@ class ChunkingService {
     const groqKey = process.env.GROQ_RAG_API_KEY || process.env.GROQ_API_KEY;
     if (groqKey) {
       ai = new OpenAI({ apiKey: groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      modelName = "llama3-70b-8192"; // 30K TPM — supports larger documents
+      modelName = "openai/gpt-oss-120b"; // 30K TPM — supports larger documents
     } else if (process.env.OPENAI_API_KEY) {
       ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       modelName = "gpt-4o-mini";

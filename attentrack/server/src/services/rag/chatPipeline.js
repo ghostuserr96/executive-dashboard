@@ -15,7 +15,7 @@ class ChatPipeline {
     if (this.groqKey) {
       console.log("Using Groq API for Chat Pipeline");
       this.ai = new OpenAI({ apiKey: this.groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      this.model = 'llama3-70b-8192'; // 30K TPM — supports larger contexts
+      this.model = 'openai/gpt-oss-120b'; // 30K TPM — supports larger contexts
     } else if (this.openAiKey) {
       console.log("Using OpenAI API for Chat Pipeline");
       this.ai = new OpenAI({ apiKey: this.openAiKey });
