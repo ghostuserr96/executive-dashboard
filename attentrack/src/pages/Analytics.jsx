@@ -353,7 +353,7 @@ export default function Analytics() {
           {/* Payroll Cost Chart */}
           <div className="card-elevated p-6 flex flex-col h-80">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-base text-foreground">Payroll Expenditures ($M)</h3>
+              <h3 className="font-semibold text-base text-foreground">Payroll Expenditures (₹M)</h3>
               <span className="text-xs text-muted-foreground">Monthly Budget Trend</span>
             </div>
             <div className="flex-1 min-h-0">

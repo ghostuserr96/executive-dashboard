@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Plus, MoreHorizontal, MessageSquare, Paperclip, X,
   CheckCircle2, Trash2, Edit3, GripVertical, Calendar,
@@ -494,6 +495,14 @@ export default function Tasks() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.autoOpenQuickAdd) {
+      setIsCreateOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Drag state
   const dragTaskRef = useRef(null);

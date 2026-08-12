@@ -108,7 +108,7 @@ export default function CandidateApply() {
           department: 'People Ops',
           location: 'San Francisco, CA (Hybrid)',
           employmentType: 'Full-time',
-          salary: '$110,000 - $145,000 / year',
+          salary: '₹110,000 - ₹145,000 / year',
           description: 'We are seeking an experienced Senior HR Manager to oversee talent acquisition, employee experience, and HR operations. You will partner with business leaders to build world-class hiring programs and drive organizational culture.',
           requirements: '• 5+ years of progressive HR or People Ops leadership experience.\n• Demonstrated success scaling recruitment pipelines and implementing modern ATS workflows.\n• Deep knowledge of employment guidelines, candidate experience, and team management.'
         });

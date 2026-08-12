@@ -193,7 +193,7 @@ function SidebarContent({ onItemClick }) {
                     {({ isActive }) => (
   <>
     <Bot className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-    <span className="flex-1 truncate">AI Insights</span>
+    <span className="flex-1 truncate">Insights</span>
   </>
 )}
                   </NavLink>

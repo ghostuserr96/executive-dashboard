@@ -46,7 +46,7 @@ export const CommandPaletteModal = ({ isOpen, onClose }) => {
     { name: 'Tasks & Projects Kanban', path: '/tasks', category: 'Pages', icon: CheckSquare },
     { name: 'Documents & Policy Vault', path: '/documents', category: 'Pages', icon: BookOpen },
     { name: 'Company Announcements', path: '/announcements', category: 'Pages', icon: Bell },
-    { name: 'AI HR Copilot', path: '/ai-insights', category: 'Pages', icon: Bot },
+    { name: 'Insights', path: '/ai-insights', category: 'Pages', icon: Bot },
     { name: 'Account Settings', path: '/settings', category: 'Pages', icon: SettingsIcon },
   ], []);
 

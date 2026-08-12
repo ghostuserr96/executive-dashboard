@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useDataContext } from '../context/DataContext';
-import { AiAssistantModal } from '../components/common/AiAssistantModal';
+
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('Today');
@@ -100,7 +100,7 @@ export default function Dashboard() {
 
   // Monthly payroll calculated from DB employee salaries
   const totalMonthlyPayroll = useMemo(() => {
-    if (!employees || employees.length === 0) return '$0.0k';
+    if (!employees || employees.length === 0) return '₹0.0k';
     const totalAnnualSalarySum = employees.reduce((sum, e) => {
       const val = typeof e.salary === 'number'
         ? e.salary
@@ -110,11 +110,11 @@ export default function Dashboard() {
     const monthlySum = totalAnnualSalarySum / 12;
 
     if (monthlySum >= 1000000) {
-      return `$${(monthlySum / 1000000).toFixed(2)}M`;
+      return `₹${(monthlySum / 1000000).toFixed(2)}M`;
     } else if (monthlySum >= 1000) {
-      return `$${(monthlySum / 1000).toFixed(1)}k`;
+      return `₹${(monthlySum / 1000).toFixed(1)}k`;
     }
-    return `$${monthlySum.toFixed(0)}`;
+    return `₹${monthlySum.toFixed(0)}`;
   }, [employees]);
 
   const healthMetrics = useMemo(() => {
@@ -130,7 +130,7 @@ export default function Dashboard() {
     const baseScore = calcAvg('overallScore');
     const engagement = calcAvg('communication'); // use communication/learning for engagement
     const productivity = calcAvg('goalCompletion');
-    const retention = 92; // Baseline metric until real turnover tracking is built
+    const retention = null;
 
     return {
       score: baseScore,
@@ -712,9 +712,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* --- ROW 4: Upcoming Birthdays/Anniversaries & AI HR Copilot Assistant Card --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="card-elevated p-6 lg:col-span-2 bg-card">
+        {/* --- ROW 4: Upcoming Birthdays/Anniversaries --- */}
+        <div className="grid grid-cols-1 gap-6">
+          <div className="card-elevated p-6 bg-card">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-base font-semibold">Upcoming Birthdays & Anniversaries</h3>
@@ -764,44 +764,11 @@ export default function Dashboard() {
               })()}
             </div>
           </div>
-
-          <div className="card-elevated p-6 bg-card flex flex-col">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2 font-semibold text-base">
-                <div className="bg-primary text-primary-foreground p-1.5 rounded-lg"><Bot className="h-4 w-4" /></div>
-                AI HR Assistant
-              </div>
-              <div className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">Online</div>
-            </div>
-            <p className="text-xs text-muted-foreground mb-4">Ask questions about attendance, employees & payroll</p>
-
-            <div className="space-y-3 flex-1 overflow-y-auto pr-1 no-scrollbar">
-              {employees.length === 0 ? (
-                <div className="text-[11px] text-muted-foreground text-center py-4">Add employees to see AI insights.</div>
-              ) : (
-                <div className="bg-background border border-border/50 rounded-xl p-3 shadow-sm hover:border-primary/30 transition-colors cursor-pointer" onClick={() => setIsAiModalOpen(true)}>
-                  <div className="text-xs font-semibold leading-tight mb-1">{employees.length} active teammates in database</div>
-                  <div className="text-[11px] text-muted-foreground leading-relaxed">Real-time data: {presentCount} present today, {onLeaveCount} on leave.</div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setIsAiModalOpen(true)}
-              className="mt-4 w-full bg-primary text-primary-foreground font-medium text-sm py-2.5 rounded-xl shadow-md hover:bg-primary/90 transition-colors cursor-pointer"
-            >
-              Open AI HR Assistant
-            </button>
-          </div>
         </div>
 
  
 
-        {/* Real Interactive AI Assistant Modal */}
-        <AiAssistantModal
-          isOpen={isAiModalOpen}
-          onClose={() => setIsAiModalOpen(false)}
-        />
+
 
         {/* Share Executive Report Modal */}
         {isShareModalOpen && (

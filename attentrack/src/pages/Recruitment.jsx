@@ -62,7 +62,7 @@ export default function Recruitment() {
     department: 'Engineering',
     location: 'Remote',
     employmentType: 'Full-time',
-    salary: '$80,000 - $120,000 / year',
+    salary: '₹80,000 - ₹120,000 / year',
     description: '',
     requirements: '',
     totalOpenings: 5
@@ -168,7 +168,7 @@ export default function Recruitment() {
         department: 'Engineering',
         location: 'Remote',
         employmentType: 'Full-time',
-        salary: '$80,000 - $120,000 / year',
+        salary: '₹80,000 - ₹120,000 / year',
         description: '',
         requirements: '',
         totalOpenings: 5
@@ -222,10 +222,10 @@ export default function Recruitment() {
         {/* Header Section */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">Modern ATS Recruitment</div>
-            <h1 className="truncate text-3xl font-bold tracking-tight text-foreground">ATS Requisitions & Public Applications</h1>
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">Recruitment</div>
+            <h1 className="truncate text-3xl font-bold tracking-tight text-foreground">Job Postings & Applications</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create jobs with auto-generated public application pages. Candidates submit applications with resumes stored in Google Drive.
+              Manage job requisitions and review candidate applications.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -756,7 +756,7 @@ export default function Recruitment() {
                   <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Salary Range (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. $90,000 - $130,000 / year"
+                    placeholder="e.g. ₹90,000 - ₹130,000 / year"
                     value={jobFormData.salary}
                     onChange={(e) => setJobFormData({ ...jobFormData, salary: e.target.value })}
                     className="w-full px-3.5 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-primary focus:outline-none h-[40px]"

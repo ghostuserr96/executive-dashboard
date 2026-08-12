@@ -445,7 +445,7 @@ export default function AiResumeScreening() {
               </div>
 
               <div className="pt-6 border-t border-border/60 flex justify-end">
-                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center bg-primary text-white hover:bg-primary/90 disabled:opacity-50 h-12 px-8 rounded-xl font-bold shadow-[0_4px_14px_0_rgb(79,70,229,0.39)] transition-all gap-2 text-sm w-full md:w-auto">
+                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center bg-primary text-white hover:bg-primary/90 disabled:opacity-50 h-12 px-8 rounded-xl font-bold transition-all gap-2 text-sm w-full md:w-auto">
                   {isSubmitting ? 'Running Analysis...' : 'Run AI Screening'}
                 </button>
               </div>

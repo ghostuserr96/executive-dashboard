@@ -11,6 +11,21 @@ import PyPDF2
 from openai import OpenAI
 from dotenv import load_dotenv
 
+def safe_float(val):
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, str):
+        # Remove any non-numeric characters except '.' and '-'
+        import re
+        cleaned = re.sub(r'[^\d.-]', '', val)
+        try:
+            return float(cleaned) if cleaned else 0.0
+        except ValueError:
+            return 0.0
+    return 0.0
+
 load_dotenv()
 parent_env = os.path.join(os.path.dirname(os.path.dirname(__file__)), "server", ".env")
 if os.path.exists(parent_env):
@@ -60,6 +75,81 @@ class AnalyzeRequest(BaseModel):
     nice_to_have_skills: List[str]
     target_keywords: List[str] = []
     candidates: List[CandidateInput]
+
+from ml_attrition import predict_attrition
+from typing import Dict, Any
+
+@app.post("/predict-attrition")
+async def predict_attrition_endpoint(employee: Dict[str, Any]):
+    # The frontend will send the employee dict straight from MongoDB
+    try:
+        # We must title-case some fields to match IBM format just in case, but let's assume it matches.
+        # Ensure Age exists
+        if 'age' not in employee:
+            return {"error": "Employee missing Age field"}
+
+        # Map camelCase JS fields to PascalCase IBM Dataset Fields
+        mapping = {
+            'age': 'Age',
+            'businessTravel': 'BusinessTravel',
+            'dailyRate': 'DailyRate',
+            'department': 'Department',
+            'distanceFromHome': 'DistanceFromHome',
+            'education': 'Education',
+            'educationField': 'EducationField',
+            'environmentSatisfaction': 'EnvironmentSatisfaction',
+            'gender': 'Gender',
+            'hourlyRate': 'HourlyRate',
+            'jobInvolvement': 'JobInvolvement',
+            'jobLevel': 'JobLevel',
+            'jobRole': 'JobRole',
+            'jobSatisfaction': 'JobSatisfaction',
+            'maritalStatus': 'MaritalStatus',
+            'monthlyIncome': 'MonthlyIncome',
+            'monthlyRate': 'MonthlyRate',
+            'numCompaniesWorked': 'NumCompaniesWorked',
+            'overTime': 'OverTime',
+            'percentSalaryHike': 'PercentSalaryHike',
+            'performanceRating': 'PerformanceRating',
+            'relationshipSatisfaction': 'RelationshipSatisfaction',
+            'stockOptionLevel': 'StockOptionLevel',
+            'totalWorkingYears': 'TotalWorkingYears',
+            'trainingTimesLastYear': 'TrainingTimesLastYear',
+            'workLifeBalance': 'WorkLifeBalance',
+            'yearsAtCompany': 'YearsAtCompany',
+            'yearsInCurrentRole': 'YearsInCurrentRole',
+            'yearsSinceLastPromotion': 'YearsSinceLastPromotion',
+            'yearsWithCurrManager': 'YearsWithCurrManager'
+        }
+
+        ibm_input = {}
+        for js_key, ibm_key in mapping.items():
+            val = employee.get(js_key)
+            # Default fallback just in case some are missing
+            if val is None:
+                if 'Satisfaction' in js_key or js_key in ['workLifeBalance', 'jobInvolvement', 'performanceRating', 'education']:
+                    val = 3
+                elif isinstance(val, (int, float)):
+                    val = 0
+                else:
+                    if js_key == 'gender': val = 'Male'
+                    elif js_key == 'maritalStatus': val = 'Married'
+                    elif js_key == 'overTime': val = 'No'
+                    elif js_key == 'department': val = 'Sales'
+                    elif js_key == 'jobRole': val = 'Sales Executive'
+                    elif js_key == 'businessTravel': val = 'Travel_Rarely'
+                    elif js_key == 'educationField': val = 'Life Sciences'
+                    else: val = 0
+
+            ibm_input[ibm_key] = val
+
+        risk_probability = predict_attrition(ibm_input)
+        return {"risk_score": risk_probability}
+    
+    except Exception as e:
+        print(f"Error predicting attrition: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     try:

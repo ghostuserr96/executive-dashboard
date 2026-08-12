@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { Search, Filter, Users, Mail, MapPin, Phone, Download, Plus, ChevronDown, SlidersHorizontal, LayoutGrid, List, Trash2, X, CheckCircle2, Building, Upload, Camera, Image as ImageIcon, Loader2, Pencil } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import { employeeService } from '../services/employeeService';
@@ -26,6 +26,7 @@ export default function Employees() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDemographicsOpen, setIsDemographicsOpen] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -47,7 +48,30 @@ export default function Employees() {
     avatar: '',
     dob: '',
     joinDate: new Date().toISOString().split('T')[0],
-    status: 'Active'
+    status: 'Active',
+    age: '',
+    distanceFromHome: '',
+    dailyRate: '',
+    hourlyRate: '',
+    monthlyIncome: '',
+    monthlyRate: '',
+    percentSalaryHike: '',
+    stockOptionLevel: 0,
+    education: 3,
+    educationField: 'Life Sciences',
+    maritalStatus: 'Single',
+    gender: 'Male',
+    jobLevel: 1,
+    numCompaniesWorked: 1,
+    trainingTimesLastYear: 2,
+    environmentSatisfaction: 3,
+    relationshipSatisfaction: 3,
+    jobSatisfaction: 3,
+    jobInvolvement: 3,
+    workLifeBalance: 3,
+    performanceRating: 3,
+    overTime: 'No',
+    businessTravel: 'Travel_Rarely'
   });
 
   useEffect(() => {
@@ -120,11 +144,43 @@ export default function Employees() {
       avatar: '',
       dob: '',
       joinDate: new Date().toISOString().split('T')[0],
-      status: 'Active'
+      status: 'Active',
+      age: '',
+      distanceFromHome: '',
+      dailyRate: '',
+      hourlyRate: '',
+      monthlyIncome: '',
+      monthlyRate: '',
+      percentSalaryHike: '',
+      stockOptionLevel: 0,
+      education: 3,
+      educationField: 'Life Sciences',
+      maritalStatus: 'Single',
+      gender: 'Male',
+      jobLevel: 1,
+      numCompaniesWorked: 1,
+      trainingTimesLastYear: 2,
+      environmentSatisfaction: 3,
+      relationshipSatisfaction: 3,
+      jobSatisfaction: 3,
+      jobInvolvement: 3,
+      workLifeBalance: 3,
+      performanceRating: 3,
+      overTime: 'No',
+      businessTravel: 'Travel_Rarely'
     });
     setUploadError('');
+    setIsDemographicsOpen(false);
     setIsAddModalOpen(true);
   };
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.autoOpenQuickAdd) {
+      handleOpenAddModal();
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleOpenEditModal = (emp) => {
     setEditingEmployeeId(emp.id);
@@ -142,9 +198,33 @@ export default function Employees() {
       avatar: emp.avatar || '',
       dob: emp.dob || '',
       joinDate: emp.joinDate || '',
-      status: emp.status || 'Active'
+      status: emp.status || 'Active',
+      age: emp.age || '',
+      distanceFromHome: emp.distanceFromHome || '',
+      dailyRate: emp.dailyRate || '',
+      hourlyRate: emp.hourlyRate || '',
+      monthlyIncome: emp.monthlyIncome || '',
+      monthlyRate: emp.monthlyRate || '',
+      percentSalaryHike: emp.percentSalaryHike || '',
+      stockOptionLevel: emp.stockOptionLevel !== undefined ? emp.stockOptionLevel : 0,
+      education: emp.education || 3,
+      educationField: emp.educationField || 'Life Sciences',
+      maritalStatus: emp.maritalStatus || 'Single',
+      gender: emp.gender || 'Male',
+      jobLevel: emp.jobLevel || 1,
+      numCompaniesWorked: emp.numCompaniesWorked || 1,
+      trainingTimesLastYear: emp.trainingTimesLastYear || 2,
+      environmentSatisfaction: emp.environmentSatisfaction || 3,
+      relationshipSatisfaction: emp.relationshipSatisfaction || 3,
+      jobSatisfaction: emp.jobSatisfaction || 3,
+      jobInvolvement: emp.jobInvolvement || 3,
+      workLifeBalance: emp.workLifeBalance || 3,
+      performanceRating: emp.performanceRating || 3,
+      overTime: emp.overTime || 'No',
+      businessTravel: emp.businessTravel || 'Travel_Rarely'
     });
     setUploadError('');
+    setIsDemographicsOpen(false);
     setIsAddModalOpen(true);
   };
 
@@ -194,7 +274,30 @@ export default function Employees() {
         avatar: '',
         dob: '',
         joinDate: new Date().toISOString().split('T')[0],
-        status: 'Active'
+        status: 'Active',
+        age: '',
+        distanceFromHome: '',
+        dailyRate: '',
+        hourlyRate: '',
+        monthlyIncome: '',
+        monthlyRate: '',
+        percentSalaryHike: '',
+        stockOptionLevel: 0,
+        education: 3,
+        educationField: 'Life Sciences',
+        maritalStatus: 'Single',
+        gender: 'Male',
+        jobLevel: 1,
+        numCompaniesWorked: 1,
+        trainingTimesLastYear: 2,
+        environmentSatisfaction: 3,
+        relationshipSatisfaction: 3,
+        jobSatisfaction: 3,
+        jobInvolvement: 3,
+        workLifeBalance: 3,
+        performanceRating: 3,
+        overTime: 'No',
+        businessTravel: 'Travel_Rarely'
       });
     } catch (err) {
       alert('Failed saving employee: ' + err.message);
@@ -541,16 +644,11 @@ export default function Employees() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Department</label>
-                    <select
+                    <CustomSelect
                       value={formData.department}
-                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="">Select option</option>
-                      {deptOptions.map((d) => (
-                        <option key={d.value} value={d.value}>{d.label}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, department: val })}
+                      options={deptOptions}
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Location</label>
@@ -567,57 +665,43 @@ export default function Employees() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Team</label>
-                    <select
+                    <CustomSelect
                       value={formData.teamId}
-                      onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="">Select team</option>
-                      {teamOptions.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, teamId: val })}
+                      options={[{ label: 'Select team', value: '' }, ...teamOptions]}
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Reports To (Manager)</label>
-                    <select
+                    <CustomSelect
                       value={formData.managerId}
-                      onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="">None</option>
-                      {managerOptions.map((m) => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, managerId: val })}
+                      options={[{ label: 'None', value: '' }, ...managerOptions]}
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Level</label>
-                    <select
+                    <CustomSelect
                       value={formData.level}
-                      onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                    >
-                      {LEVELS.map((l) => (
-                        <option key={l} value={l}>{l}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, level: val })}
+                      options={LEVELS.map(l => ({ label: l, value: l }))}
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-foreground mb-1">Status</label>
-                    <select
+                    <CustomSelect
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                      <option value="On Leave">On Leave</option>
-                      <option value="Terminated">Terminated</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, status: val })}
+                      options={[
+                        { label: 'Active', value: 'Active' },
+                        { label: 'Inactive', value: 'Inactive' },
+                        { label: 'On Leave', value: 'On Leave' },
+                        { label: 'Terminated', value: 'Terminated' }
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -662,6 +746,119 @@ export default function Employees() {
                     onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
                     className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
                   />
+                </div>
+
+                <div className="pt-2 border-t border-border mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsDemographicsOpen(!isDemographicsOpen)}
+                    className="flex items-center justify-between w-full p-3 rounded-xl bg-secondary/50 hover:bg-secondary text-left transition-colors cursor-pointer"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">Demographics & Compensation</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">Manage advanced HR and financial data</div>
+                    </div>
+                    <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isDemographicsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isDemographicsOpen && (
+                    <div className="mt-4 space-y-4 p-4 border border-border rounded-xl bg-background">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Age</label>
+                          <input type="number" value={formData.age} onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Distance From Home (mi)</label>
+                          <input type="number" value={formData.distanceFromHome} onChange={(e) => setFormData({ ...formData, distanceFromHome: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Daily Rate (₹)</label>
+                          <input type="number" value={formData.dailyRate} onChange={(e) => setFormData({ ...formData, dailyRate: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Hourly Rate (₹)</label>
+                          <input type="number" value={formData.hourlyRate} onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Monthly Income (₹)</label>
+                          <input type="number" value={formData.monthlyIncome} onChange={(e) => setFormData({ ...formData, monthlyIncome: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Monthly Rate (₹)</label>
+                          <input type="number" value={formData.monthlyRate} onChange={(e) => setFormData({ ...formData, monthlyRate: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Salary Hike (%)</label>
+                          <input type="number" value={formData.percentSalaryHike} onChange={(e) => setFormData({ ...formData, percentSalaryHike: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Stock Option Level</label>
+                          <CustomSelect value={formData.stockOptionLevel} onChange={(val) => setFormData({ ...formData, stockOptionLevel: Number(val) })} options={[{label: '0 - None', value: 0},{label: '1 - Low', value: 1},{label: '2 - Medium', value: 2},{label: '3 - High', value: 3}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Education Level</label>
+                          <CustomSelect value={formData.education} onChange={(val) => setFormData({ ...formData, education: Number(val) })} options={[{label: '1 - Below College', value: 1},{label: '2 - College', value: 2},{label: '3 - Bachelor', value: 3},{label: '4 - Master', value: 4},{label: '5 - Doctor', value: 5}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Education Field</label>
+                          <input type="text" value={formData.educationField} onChange={(e) => setFormData({ ...formData, educationField: e.target.value })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Marital Status</label>
+                          <CustomSelect value={formData.maritalStatus} onChange={(val) => setFormData({ ...formData, maritalStatus: val })} options={[{label: 'Single', value: 'Single'},{label: 'Married', value: 'Married'},{label: 'Divorced', value: 'Divorced'}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Gender</label>
+                          <CustomSelect value={formData.gender} onChange={(val) => setFormData({ ...formData, gender: val })} options={[{label: 'Male', value: 'Male'},{label: 'Female', value: 'Female'}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Job Level</label>
+                          <CustomSelect value={formData.jobLevel} onChange={(val) => setFormData({ ...formData, jobLevel: Number(val) })} options={[{label: '1', value: 1},{label: '2', value: 2},{label: '3', value: 3},{label: '4', value: 4},{label: '5', value: 5}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Past Companies Worked</label>
+                          <input type="number" value={formData.numCompaniesWorked} onChange={(e) => setFormData({ ...formData, numCompaniesWorked: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Training Last Year</label>
+                          <input type="number" value={formData.trainingTimesLastYear} onChange={(e) => setFormData({ ...formData, trainingTimesLastYear: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Env Satisfaction</label>
+                          <CustomSelect value={formData.environmentSatisfaction} onChange={(val) => setFormData({ ...formData, environmentSatisfaction: Number(val) })} options={[{label: '1 - Low', value: 1},{label: '2 - Medium', value: 2},{label: '3 - High', value: 3},{label: '4 - Very High', value: 4}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Rel Satisfaction</label>
+                          <CustomSelect value={formData.relationshipSatisfaction} onChange={(val) => setFormData({ ...formData, relationshipSatisfaction: Number(val) })} options={[{label: '1 - Low', value: 1},{label: '2 - Medium', value: 2},{label: '3 - High', value: 3},{label: '4 - Very High', value: 4}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Job Satisfaction</label>
+                          <CustomSelect value={formData.jobSatisfaction} onChange={(val) => setFormData({ ...formData, jobSatisfaction: Number(val) })} options={[{label: '1 - Low', value: 1},{label: '2 - Medium', value: 2},{label: '3 - High', value: 3},{label: '4 - Very High', value: 4}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Job Involvement</label>
+                          <CustomSelect value={formData.jobInvolvement} onChange={(val) => setFormData({ ...formData, jobInvolvement: Number(val) })} options={[{label: '1 - Low', value: 1},{label: '2 - Medium', value: 2},{label: '3 - High', value: 3},{label: '4 - Very High', value: 4}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Work Life Balance</label>
+                          <CustomSelect value={formData.workLifeBalance} onChange={(val) => setFormData({ ...formData, workLifeBalance: Number(val) })} options={[{label: '1 - Bad', value: 1},{label: '2 - Good', value: 2},{label: '3 - Better', value: 3},{label: '4 - Best', value: 4}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Performance Rating</label>
+                          <CustomSelect value={formData.performanceRating} onChange={(val) => setFormData({ ...formData, performanceRating: Number(val) })} options={[{label: '1 - Low', value: 1},{label: '2 - Good', value: 2},{label: '3 - Excellent', value: 3},{label: '4 - Outstanding', value: 4}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">OverTime</label>
+                          <CustomSelect value={formData.overTime} onChange={(val) => setFormData({ ...formData, overTime: val })} options={[{label: 'Yes', value: 'Yes'},{label: 'No', value: 'No'}]} />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Business Travel</label>
+                          <CustomSelect value={formData.businessTravel} onChange={(val) => setFormData({ ...formData, businessTravel: val })} options={[{label: 'Non-Travel', value: 'Non-Travel'},{label: 'Travel Rarely', value: 'Travel_Rarely'},{label: 'Travel Frequently', value: 'Travel_Frequently'}]} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-3 flex justify-end gap-2">

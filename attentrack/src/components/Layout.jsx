@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { Outlet } from 'react-router-dom';
 import { Bot } from 'lucide-react';
-import { AiAssistantModal } from './common/AiAssistantModal';
+
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -28,10 +28,7 @@ export default function Layout() {
       */}
 
       {/* Global Interactive AI Assistant Modal */}
-      <AiAssistantModal
-        isOpen={isAiModalOpen}
-        onClose={() => setIsAiModalOpen(false)}
-      />
+
     </div>
   );
 }

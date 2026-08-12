@@ -62,12 +62,12 @@ export const CustomSelect = ({ options, value, onChange, label, icon: Icon, plac
                   onClick={() => handleSelect(opt.value)}
                   className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs md:text-sm transition-all text-left cursor-pointer ${
                     isSelected
-                      ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                      ? 'bg-primary/20 text-foreground font-semibold shadow-sm'
                       : 'text-foreground/90 hover:bg-accent hover:text-accent-foreground'
                   }`}
                 >
                   <span className="truncate">{opt.label}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground shrink-0" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
                 </button>
               );
             })}

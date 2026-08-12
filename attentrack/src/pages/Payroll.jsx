@@ -35,9 +35,10 @@ const CustomTick = ({ x, y, payload }) => {
 
 // Realistic role & seniority based salary calculator
 const getBaseSalaryByRoleAndId = (emp, index) => {
-  if (emp.salary) {
-    const parsed = parseFloat(String(emp.salary).replace(/[^0-9.]/g, ''));
-    if (!isNaN(parsed) && parsed > 0) return Math.round(parsed / 12);
+  const income = emp.monthlyIncome;
+  if (income) {
+    const parsed = parseFloat(String(income).replace(/[^0-9.]/g, ''));
+    if (!isNaN(parsed) && parsed > 0) return Math.round(parsed);
   }
   return 0; // Strictly real data. Defaults to 0 if no salary is set in DB.
 };
@@ -106,10 +107,10 @@ export default function Payroll() {
         rawAllowances: allowance,
         rawDeductions: deduction,
         rawNet: netPay,
-        base: `$${baseMonthly.toLocaleString()}`,
-        allowances: `+$${allowance.toLocaleString()}`,
-        deductions: `-$${deduction.toLocaleString()}`,
-        net: `$${netPay.toLocaleString()}`,
+        base: `₹${baseMonthly.toLocaleString()}`,
+        allowances: `+₹${allowance.toLocaleString()}`,
+        deductions: `-₹${deduction.toLocaleString()}`,
+        net: `₹${netPay.toLocaleString()}`,
         status: calculatedStatus,
         avatar: emp.avatar || null
       };
@@ -190,12 +191,11 @@ export default function Payroll() {
     setIsSavingSalary(true);
     try {
       const baseNum = parseFloat(editBase) || 0;
-      const annualVal = baseNum * 12;
       const allowanceNum = parseFloat(editAllowances) || 0;
       const deductionNum = parseFloat(editDeductions) || 0;
 
       await employeeService.update(editingEmployee.rawId, {
-        salary: annualVal,
+        monthlyIncome: baseNum,
         customAllowances: allowanceNum,
         customDeductions: deductionNum,
         payrollStatus: editStatus
@@ -216,17 +216,21 @@ export default function Payroll() {
 
   // CSV Payslip Exporter
   const handleExportPayslips = () => {
-    let csvContent = "data:text/csv;charset=utf-8,Employee,Employee ID,Department,Base Salary,Allowances,Deductions,Net Pay,Status\n";
+    let csvString = "Employee,Employee ID,Department,Base Salary,Allowances,Deductions,Net Pay,Status\n";
     payslipList.forEach(p => {
-      csvContent += `"${p.name}","${p.id}","${p.role}","${p.base}","${p.allowances}","${p.deductions}","${p.net}","${p.status}"\n`;
+      csvString += `"${p.name}","${p.id}","${p.role}","${p.base}","${p.allowances}","${p.deductions}","${p.net}","${p.status}"\n`;
     });
-    const encodedUri = encodeURI(csvContent);
+    
+    // Add UTF-8 BOM (\uFEFF) to ensure Excel correctly renders special characters like ₹
+    const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `${currentMonthName}_Payroll_Payslips.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     setPayrollStatusMessage(`✅ Exported ${payslipList.length} payslips to ${currentMonthName}_Payroll_Payslips.csv`);
     setTimeout(() => setPayrollStatusMessage(''), 4000);
@@ -248,17 +252,17 @@ export default function Payroll() {
   const payrollStats = [
     {
       title: `${currentMonthName} payroll`,
-      value: `$${monthlyTotal.toLocaleString()}`,
+      value: `₹${monthlyTotal.toLocaleString()}`,
       change: null,
       isPositive: true,
       icon: <Wallet className="h-5 w-5 text-green-500" />
     },
     {
       title: 'Bonuses',
-      value: `$${totalBonuses.toLocaleString()}`,
+      value: `₹${totalBonuses.toLocaleString()}`,
       change: null,
       isPositive: true,
-      icon: <DollarSign className="h-5 w-5 text-blue-500" />
+      icon: <DollarSign className="h-5 w-5 text-primary" />
     },
     {
       title: 'Approvals',
@@ -303,9 +307,9 @@ export default function Payroll() {
             <button
               onClick={handleRunPayroll}
               disabled={isRunningPayroll}
-              className="flex items-center gap-2 bg-blue-600 text-foreground hover:bg-blue-700 h-10 px-4 rounded-full text-sm font-medium transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 rounded-full text-sm font-medium transition-colors shadow-sm cursor-pointer disabled:opacity-50"
             >
-              <Play className="h-4 w-4 fill-white" /> {isRunningPayroll ? 'Processing Payroll...' : `Run ${currentMonthName} payroll`}
+              <Play className="h-4 w-4 fill-current" /> {isRunningPayroll ? 'Processing Payroll...' : `Run ${currentMonthName} payroll`}
             </button>
           </div>
         </div>
@@ -326,7 +330,7 @@ export default function Payroll() {
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                   <h3 className="text-2xl font-semibold mt-2 truncate">{stat.value}</h3>
                 </div>
-                <div className={`p-2 rounded-full ${stat.title.includes('payroll') ? 'bg-green-100 dark:bg-green-500/20' : stat.title === 'Bonuses' ? 'bg-blue-100 dark:bg-blue-500/20' : stat.title === 'Approvals' ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-green-100 dark:bg-green-500/20'}`}>
+                <div className={`p-2 rounded-full ${stat.title.includes('payroll') ? 'bg-green-100 dark:bg-green-500/20' : stat.title === 'Bonuses' ? 'bg-primary/20 dark:bg-primary/20' : stat.title === 'Approvals' ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-green-100 dark:bg-green-500/20'}`}>
                   {stat.icon}
                 </div>
               </div>
@@ -358,9 +362,9 @@ export default function Payroll() {
                   <span>{step.title}</span>
                   <span>{step.value}%</span>
                 </div>
-                <div className="h-2.5 w-full bg-blue-100 dark:bg-blue-900/30 rounded-full overflow-hidden">
+                <div className="h-2.5 w-full bg-primary/20 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-blue-600 rounded-full" 
+                    className="h-full bg-primary rounded-full" 
                     style={{ width: `${step.value}%` }}
                   />
                 </div>
@@ -372,7 +376,7 @@ export default function Payroll() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card-elevated p-6 flex flex-col">
-            <h3 className="text-base font-semibold mb-6">12-month payroll cost ($M)</h3>
+            <h3 className="text-base font-semibold mb-6">12-month payroll cost (₹M)</h3>
             <div className="h-[250px] w-full mt-auto">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={payrollTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -390,7 +394,7 @@ export default function Payroll() {
           </div>
 
           <div className="card-elevated p-6 flex flex-col">
-            <h3 className="text-base font-semibold mb-6">Cost by department ($K / mo)</h3>
+            <h3 className="text-base font-semibold mb-6">Cost by department (₹K / mo)</h3>
             <div className="h-[250px] w-full mt-auto">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={departmentCostsData} margin={{ top: 10, right: 10, left: -10, bottom: 40 }} barSize={32}>
@@ -522,7 +526,7 @@ export default function Payroll() {
             <form onSubmit={handleSaveSalary} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                  Base Monthly Salary ($)
+                  Base Monthly Salary (₹)
                 </label>
                 <input
                   type="number"
@@ -536,7 +540,7 @@ export default function Payroll() {
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                  Monthly Allowances ($)
+                  Monthly Allowances (₹)
                 </label>
                 <input
                   type="number"
@@ -550,7 +554,7 @@ export default function Payroll() {
 
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                  Monthly Deductions ($)
+                  Monthly Deductions (₹)
                 </label>
                 <input
                   type="number"

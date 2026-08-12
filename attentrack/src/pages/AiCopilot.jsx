@@ -11,7 +11,8 @@ import {
   UserCheck,
   Building,
   Briefcase,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 
@@ -106,7 +107,7 @@ const EmployeeRiskCard = ({ name, role, department, avatar, conf }) => (
 );
 
 export default function AiCopilot() {
-  const { employees, attendance, leaves, tasks, performance, recruitmentJobs, recruitmentCandidates } = useDataContext();
+  const { employees, attendance, leaves, tasks, performance, recruitmentJobs, recruitmentCandidates, fetchEmployees } = useDataContext();
 
   // Active insights list - Starts empty as there are no real AI triggers yet
   const [insights, setInsights] = useState([]);
@@ -116,6 +117,7 @@ export default function AiCopilot() {
 
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
@@ -191,10 +193,52 @@ export default function AiCopilot() {
     }, 800);
   };
 
-  // Real employee risk list derived from database employees
-  const employeeRiskList = useMemo(() => {
-    return []; // No real risk model exists currently, return empty so we don't falsely label real employees
-  }, [employees]);
+  // Real employee risk list derived from database employees via ML Model
+  const [employeeRiskList, setEmployeeRiskList] = useState([]);
+  const [isPredicting, setIsPredicting] = useState(false);
+
+
+
+  const handleSimulate = async () => {
+    setIsSimulating(true);
+    setIsPredicting(true);
+    try {
+      // Optional DB sync hook if required by backend, but we mainly need latest employees
+      await fetch('http://localhost:5001/api/v1/employees/sync-real-data', { method: 'POST' });
+      
+      const empRes = await fetch('http://localhost:5001/api/v1/employees');
+      const latestEmployees = await empRes.json();
+      
+      const risks = [];
+      const activeEmployees = latestEmployees.filter(e => e.status !== 'Terminated');
+      
+      for (const emp of activeEmployees) {
+        const res = await fetch('http://localhost:8001/predict-attrition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emp)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.risk_score > 0.50) {
+            risks.push({
+              ...emp,
+              conf: (data.risk_score * 100).toFixed(1) + '%'
+            });
+          }
+        }
+      }
+      
+      risks.sort((a, b) => parseFloat(b.conf) - parseFloat(a.conf));
+      setEmployeeRiskList(risks);
+
+    } catch (err) {
+      console.error("Failed to run AI analysis:", err);
+    } finally {
+      setIsSimulating(false);
+      setIsPredicting(false);
+    }
+  };
 
   return (
     <main className="flex-1 min-w-0 overflow-y-auto bg-background/50">
@@ -204,173 +248,71 @@ export default function AiCopilot() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="text-primary font-semibold text-xs tracking-wider uppercase mb-1 flex items-center gap-2">
-              <span>AI COPILOT</span>
+              <span>INSIGHTS</span>
               <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Your Intelligent HR Partner
+              Insights
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Signals, forecasts and recommendations detected across your workforce this week.
             </p>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-semibold border border-primary/20 shadow-sm">
-            <Sparkles className="w-4 h-4" />
-            <span>{insights.length} active insights</span>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column - Insights & Risk Radar */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* Left Column - Risk Radar */}
+          <div className="lg:col-span-12 space-y-6">
             
-            {/* Insights Grid */}
-            {insights.length === 0 ? (
-              <div className="p-8 border border-dashed border-border rounded-2xl text-center text-muted-foreground">
-                <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400 mb-2" />
-                <p className="text-sm font-medium">All current insights reviewed and dismissed.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                {insights.map(item => (
-                  <InsightCard
-                    key={item.id}
-                    id={item.id}
-                    type={item.type}
-                    badgeText={item.badgeText}
-                    title={item.title}
-                    description={item.description}
-                    onDismiss={handleDismissInsight}
-                    onTakeAction={handleTakeAction}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Attrition Risk Radar */}
+            {/* Attrition Risk Radar (Real ML Model UI) */}
             <div className="card-elevated p-6 border border-border rounded-2xl bg-card">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="font-semibold text-base text-card-foreground">Attrition Risk Radar</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Live Database HR Search Assistant</p>
+                  <h3 className="font-semibold text-base text-card-foreground">Insights</h3>
                 </div>
-                <span className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full text-[11px] font-bold tracking-wider uppercase">
-                  {employeeRiskList.length} Flagged
-                </span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleSimulate}
+                    disabled={isSimulating || isPredicting}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border rounded-full text-[11px] font-bold tracking-wider uppercase transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isPredicting ? 'animate-spin' : ''}`} />
+                    Run AI Analysis
+                  </button>
+                  {!isPredicting && employeeRiskList.length > 0 && (
+                    <span className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full text-[11px] font-bold tracking-wider uppercase">
+                      {employeeRiskList.length} High Risk
+                    </span>
+                  )}
+                </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {employeeRiskList.map((emp, idx) => (
-                  <EmployeeRiskCard
-                    key={idx}
-                    name={emp.name}
-                    role={emp.role}
-                    department={emp.department}
-                    avatar={emp.avatar}
-                    conf={emp.conf}
-                  />
-                ))}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right Column - Ask Copilot Chat */}
-          <div className="lg:col-span-4">
-            <div className="card-elevated border border-border h-[calc(100vh-8rem)] max-h-[680px] flex flex-col rounded-2xl overflow-hidden sticky top-8 bg-card shadow-lg">
-              
-              {/* Chat Header */}
-              <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-md">
-                    <BrainCircuit className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-base text-card-foreground leading-tight">Ask Copilot</h3>
-                    <p className="text-xs text-muted-foreground">Natural language HR queries</p>
-                  </div>
+              {isPredicting ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <p className="text-sm text-muted-foreground font-medium">IBM Machine Learning Model analyzing workforce...</p>
                 </div>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" title="Online" />
-              </div>
-
-              {/* Chat Messages Body */}
-              <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-card/60">
-                {messages.map(msg => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start gap-3'}`}
-                  >
-                    {msg.sender === 'copilot' && (
-                      <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mt-0.5 border border-primary/20">
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </div>
-                    )}
-                    <div
-                      className={`max-w-[85%] px-4 py-3 rounded-2xl text-xs md:text-sm leading-relaxed ${
-                        msg.sender === 'user'
-                          ? 'bg-primary text-primary-foreground font-medium rounded-tr-xs shadow-md'
-                          : 'bg-muted/80 text-foreground border border-border/60 rounded-tl-xs whitespace-pre-line shadow-sm'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-
-                {isTyping && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground p-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span>Copilot is analyzing workforce data...</span>
-                  </div>
-                )}
-                <div ref={chatBottomRef} />
-              </div>
-
-              {/* Suggestion Pills */}
-              <div className="px-4 py-2 border-t border-border/40 bg-muted/20 flex flex-wrap gap-1.5">
-                {[
-                  'Who is on leave?',
-                  'Show HR summary',
-                  'Hiring pipeline status',
-                  'Task Kanban status'
-                ].map((sug, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSendMessage(sug)}
-                    className="px-3 py-1 rounded-full border border-border/80 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-card hover:border-primary/40 transition-all cursor-pointer"
-                  >
-                    {sug}
-                  </button>
-                ))}
-              </div>
-
-              {/* Chat Input Bar */}
-              <div className="p-4 bg-card border-t border-border">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }}
-                  className="relative flex items-center"
-                >
-                  <input 
-                    type="text" 
-                    value={inputQuery}
-                    onChange={(e) => setInputQuery(e.target.value)}
-                    placeholder="Ask anything about your team..." 
-                    className="w-full border border-border rounded-full pl-5 pr-12 py-3 text-xs md:text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background placeholder:text-muted-foreground text-foreground"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!inputQuery.trim()}
-                    className="absolute right-1.5 p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </form>
-              </div>
-
+              ) : employeeRiskList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-3" />
+                  <p className="text-sm text-muted-foreground font-medium">No high flight risks detected currently.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {employeeRiskList.map((emp, idx) => (
+                    <EmployeeRiskCard
+                      key={idx}
+                      name={emp.name}
+                      role={emp.jobRole || emp.role}
+                      department={emp.department}
+                      avatar={emp.avatar}
+                      conf={emp.conf}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
+            
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   CheckCircle,
   Clock,
@@ -79,6 +80,14 @@ export default function Attendance() {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState('Selfie');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.autoOpenQuickAdd) {
+      setIsCheckInModalOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Camera & Selfie States
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -517,7 +526,7 @@ export default function Attendance() {
           {
             title: 'Checked in',
             value: String(checkedInCount),
-            change: '+2.1%',
+            change: null,
             isPositive: true,
             subtext: 'vs yesterday',
             icon: <CheckCircle className="h-5 w-5 text-green-500" />
@@ -525,25 +534,25 @@ export default function Attendance() {
           {
             title: 'Late',
             value: String(lateCount),
-            change: '-8.2%',
-            isPositive: false,
+            change: null,
+            isPositive: true,
             subtext: 'vs yesterday',
             icon: <Clock className="h-5 w-5 text-amber-500" />
           },
           {
             title: 'Absent',
             value: String(absentCount),
-            change: '-1.4%',
-            isPositive: false,
+            change: null,
+            isPositive: true,
             subtext: 'vs yesterday',
             icon: <XCircle className="h-5 w-5 text-red-500" />
           },
           {
             title: 'Avg. hours',
             value: avgHoursText,
-            change: '+0.6%',
+            change: null,
             isPositive: true,
-            subtext: 'today',
+            subtext: 'vs yesterday',
             icon: <Clock className="h-5 w-5 text-blue-500" />
           }
         ];
@@ -552,7 +561,7 @@ export default function Attendance() {
           {
             title: 'Checked in',
             value: String(checkedInCount),
-            change: '+5.4%',
+            change: null,
             isPositive: true,
             subtext: 'vs last month',
             icon: <CheckCircle className="h-5 w-5 text-green-500" />
@@ -560,25 +569,25 @@ export default function Attendance() {
           {
             title: 'Late',
             value: String(lateCount),
-            change: '-12.1%',
-            isPositive: false,
+            change: null,
+            isPositive: true,
             subtext: 'vs last month',
             icon: <Clock className="h-5 w-5 text-amber-500" />
           },
           {
             title: 'Absent',
             value: String(absentCount),
-            change: '-3.2%',
-            isPositive: false,
+            change: null,
+            isPositive: true,
             subtext: 'vs last month',
             icon: <XCircle className="h-5 w-5 text-red-500" />
           },
           {
             title: 'Avg. hours',
             value: avgHoursText,
-            change: '+2.4%',
+            change: null,
             isPositive: true,
-            subtext: 'this month',
+            subtext: 'vs last month',
             icon: <Clock className="h-5 w-5 text-blue-500" />
           }
         ];
@@ -587,7 +596,7 @@ export default function Attendance() {
           {
             title: 'Checked in',
             value: String(checkedInCount),
-            change: '+1.8%',
+            change: null,
             isPositive: true,
             subtext: 'across 3 shifts',
             icon: <CheckCircle className="h-5 w-5 text-green-500" />
@@ -595,15 +604,15 @@ export default function Attendance() {
           {
             title: 'Late',
             value: String(lateCount),
-            change: '-4.1%',
-            isPositive: false,
+            change: null,
+            isPositive: true,
             subtext: 'across 3 shifts',
             icon: <Clock className="h-5 w-5 text-amber-500" />
           },
           {
             title: 'Absent',
             value: String(absentCount),
-            change: '0.0%',
+            change: null,
             isPositive: true,
             subtext: 'across 3 shifts',
             icon: <XCircle className="h-5 w-5 text-red-500" />
@@ -611,7 +620,7 @@ export default function Attendance() {
           {
             title: 'Avg. hours',
             value: avgHoursText,
-            change: '+0.2%',
+            change: null,
             isPositive: true,
             subtext: 'per shift',
             icon: <Clock className="h-5 w-5 text-blue-500" />

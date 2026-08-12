@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   CheckCircle,
   Clock,
@@ -49,6 +50,14 @@ export default function Leave() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.autoOpenQuickAdd) {
+      setIsApplyModalOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const [formData, setFormData] = useState({
     type: 'Annual Leave',

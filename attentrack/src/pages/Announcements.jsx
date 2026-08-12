@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Megaphone, 
   ThumbsUp, 
@@ -402,6 +403,14 @@ export default function Announcements() {
 
   const [postModalOpen, setPostModalOpen] = useState(false);
   const [commentsModalData, setCommentsModalData] = useState(null);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.autoOpenQuickAdd) {
+      setPostModalOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const sortedAnnouncements = useMemo(() => {
     if (!Array.isArray(announcements)) return [];

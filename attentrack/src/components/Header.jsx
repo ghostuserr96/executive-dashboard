@@ -128,7 +128,7 @@ export default function Header({ onToggleMobileMenu }) {
 
   const handleQuickAddAction = (path) => {
     setIsQuickAddOpen(false);
-    navigate(path);
+    navigate(path, { state: { autoOpenQuickAdd: true } });
   };
 
   const handleNotificationClick = (notif) => {
