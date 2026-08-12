@@ -8,3 +8,4 @@ python-dotenv
 requests
 PyPDF2
 openai
+python-multipart
