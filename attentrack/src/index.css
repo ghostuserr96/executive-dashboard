@@ -196,4 +196,47 @@
     animation: none;
     mix-blend-mode: normal;
   }
+
+  /* Org Chart CSS */
+  .org-tree-container {
+    @apply block overflow-x-auto overflow-y-hidden p-8;
+  }
+  .org-tree {
+    @apply w-max mx-auto;
+  }
+  .org-tree ul {
+    @apply pt-5 relative transition-all duration-500 flex justify-center;
+  }
+  .org-tree li {
+    @apply flex flex-col items-center float-left text-center list-none relative pt-5 px-2 transition-all duration-500;
+  }
+  .org-tree li::before, .org-tree li::after {
+    content: '';
+    @apply absolute top-0 right-1/2 border-t-2 border-border w-1/2 h-5;
+  }
+  .org-tree li::after {
+    @apply right-auto left-1/2 border-l-2;
+  }
+  .org-tree li:only-child::after, .org-tree li:only-child::before {
+    @apply hidden;
+  }
+  .org-tree li:only-child {
+    @apply pt-0;
+  }
+  .org-tree li:first-child::before, .org-tree li:last-child::after {
+    @apply border-none;
+  }
+  .org-tree li:last-child::before {
+    @apply border-r-2 border-border rounded-tr-md;
+  }
+  .org-tree li:first-child::after {
+    @apply rounded-tl-md;
+  }
+  .org-tree ul::before {
+    content: '';
+    @apply absolute top-0 left-1/2 border-l-2 border-border w-0 h-5 -translate-x-1/2;
+  }
+  .org-node {
+    @apply relative;
+  }
 }

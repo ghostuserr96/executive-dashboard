@@ -290,7 +290,7 @@ export default function AiCopilot() {
               {isPredicting ? (
                 <div className="flex flex-col items-center justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-                  <p className="text-sm text-muted-foreground font-medium">IBM Machine Learning Model analyzing workforce...</p>
+                  <p className="text-sm text-muted-foreground font-medium">AI is analyzing workforce patterns...</p>
                 </div>
               ) : employeeRiskList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8">

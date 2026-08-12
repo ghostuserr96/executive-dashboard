@@ -46,124 +46,84 @@ const levelColor = (level) => {
   return map[level] || map['Individual'];
 };
 
-const TreeNode = ({ node, depth = 0, onEdit, onDelete, onAddChild, employees, selectedManager, onSelectManager }) => {
-  const [expanded, setExpanded] = useState(depth < 2);
+const OrgChartNode = ({ node, onEdit, onDelete, onAddChild, employees }) => {
   const hasChildren = node.children && node.children.length > 0;
-  const isDept = node.type === 'department';
+  const isDept = node.type === 'department' || node.type === 'root';
   const isTeam = node.type === 'team';
   const isEmp = node.type === 'employee';
 
   return (
-    <div className="select-none">
-      <div
-        className="flex items-center gap-2 py-1.5 group cursor-pointer"
-        style={{ paddingLeft: depth * 24 }}
-      >
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {hasChildren ? (
-            expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-          ) : (
-            <span className="w-4 h-4" />
-          )}
-        </button>
-
-        <div
-          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all ${
-            isDept
-              ? 'bg-blue-500/5 border-blue-500/20 hover:border-blue-500/40 w-full max-w-md'
-              : isTeam
-              ? 'bg-cyan-500/5 border-cyan-500/20 hover:border-cyan-500/40 w-full max-w-sm'
-              : 'bg-slate-500/5 border-slate-500/20 hover:border-slate-500/40'
-          }`}
-        >
-          {isDept && <Building2 className="w-4 h-4 text-blue-400 shrink-0" />}
-          {isTeam && <Briefcase className="w-4 h-4 text-cyan-400 shrink-0" />}
+    <li>
+      <div className="org-node group inline-block mx-2">
+        <div className={`flex flex-col items-center justify-center min-w-[140px] max-w-[200px] p-3 rounded-2xl border transition-all shadow-sm relative bg-card ${
+            node.type === 'root' ? 'border-primary/30 shadow-primary/10' :
+            isDept ? 'border-blue-500/20 shadow-blue-500/5 hover:border-blue-500/40' :
+            isTeam ? 'border-cyan-500/20 shadow-cyan-500/5 hover:border-cyan-500/40' :
+            'border-slate-500/20 shadow-slate-500/5 hover:border-slate-500/40'
+        }`}>
+          
+          {isDept && node.type !== 'root' && <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center mb-2"><Building2 className="w-4 h-4 text-blue-400" /></div>}
+          {isTeam && <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-2"><Briefcase className="w-4 h-4 text-cyan-400" /></div>}
           {isEmp && (
-            <div className="w-7 h-7 rounded-full bg-muted overflow-hidden shrink-0">
+            <div className="w-10 h-10 rounded-full bg-muted overflow-hidden mb-2 shadow-sm border border-border">
               {node.avatar ? (
                 <img src={node.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-foreground">
+                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-foreground">
                   {node.initials || node.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
               )}
             </div>
           )}
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium truncate text-foreground">{node.name}</span>
-              {node.type === 'employee' && node.status && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${STATUS_COLORS[node.status] || STATUS_COLORS.Active}`}>
-                  {node.status}
-                </span>
-              )}
-              {node.type === 'employee' && node.level && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${levelColor(node.level)}`}>
-                  {node.level}
-                </span>
-              )}
+          <span className="text-sm font-semibold truncate text-foreground w-full text-center block leading-tight">{node.name}</span>
+          
+          {node.role && <p className="text-xs text-muted-foreground truncate w-full text-center mt-1">{node.role}</p>}
+          
+          {isEmp && node.level && (
+            <div className="mt-2">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${levelColor(node.level)}`}>
+                {node.level}
+              </span>
             </div>
-            {node.role && (
-              <p className="text-xs text-muted-foreground truncate">{node.role}</p>
-            )}
-            {isTeam && node.stats && (
-              <p className="text-xs text-muted-foreground">{node.stats.activeEmployees || 0} active members</p>
-            )}
-            {isDept && node.stats && (
-              <p className="text-xs text-muted-foreground">{node.stats.activeEmployees || 0} active across {node.stats.teamCount || 0} teams</p>
-            )}
-          </div>
+          )}
 
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            {!isEmp && (
-              <button
-                onClick={() => onAddChild(node)}
-                className="p-1.5 rounded-lg hover:bg-emerald-500/10 text-emerald-400 transition-colors"
-                title="Add"
-              >
+          {/* Action Overlay */}
+          <div className="absolute -top-3 -right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-card border border-border rounded-lg shadow-md p-1 z-10">
+            {(!isEmp || node.type === 'employee') && (
+              <button onClick={() => onAddChild(node)} className="p-1 rounded hover:bg-emerald-500/10 text-emerald-500 transition-colors cursor-pointer" title="Add">
                 <Plus className="w-3.5 h-3.5" />
               </button>
             )}
-            <button
-              onClick={() => onEdit(node)}
-              className="p-1.5 rounded-lg hover:bg-indigo-500/10 text-indigo-400 transition-colors"
-              title="Edit"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => onDelete(node)}
-              className="p-1.5 rounded-lg hover:bg-rose-500/10 text-rose-400 transition-colors"
-              title="Delete"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            {node.type !== 'root' && (
+              <>
+                <button onClick={() => onEdit(node)} className="p-1 rounded hover:bg-indigo-500/10 text-indigo-500 transition-colors cursor-pointer" title="Edit">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => onDelete(node)} className="p-1 rounded hover:bg-rose-500/10 text-rose-500 transition-colors cursor-pointer" title="Delete">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {expanded && hasChildren && (
-        <div>
+      {hasChildren && (
+        <ul>
           {node.children.map((child) => (
-            <TreeNode
+            <OrgChartNode
               key={child.id}
               node={child}
-              depth={depth + 1}
               onEdit={onEdit}
               onDelete={onDelete}
               onAddChild={onAddChild}
               employees={employees}
-              selectedManager={selectedManager}
-              onSelectManager={onSelectManager}
             />
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </li>
   );
 };
 
@@ -175,6 +135,7 @@ export default function Organization() {
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [activeTab, setActiveTab] = useState('tree'); // 'tree' | 'departments' | 'teams' | 'employees'
+  const [treeViewMode, setTreeViewMode] = useState('people'); // 'people' | 'department'
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' | 'edit'
@@ -205,19 +166,15 @@ export default function Organization() {
     fetchOrgData();
   }, []);
 
-  const buildTree = () => {
+  const buildDepartmentTree = () => {
     const deptNodes = departments.map((dept) => {
-      const deptTeams = teams.filter((t) => t.departmentId === dept.id);
+      const deptTeams = teams.filter((t) => String(t.departmentId) === String(dept.id));
       const teamChildren = deptTeams.map((t) => {
         const teamEmps = employees.filter((e) => String(e.teamId) === String(t.id));
         return {
           ...t,
           type: 'team',
-          children: teamEmps.map((e) => ({
-            ...e,
-            type: 'employee',
-            children: []
-          }))
+          children: teamEmps.map((e) => ({ ...e, type: 'employee', children: [] }))
         };
       });
 
@@ -228,17 +185,29 @@ export default function Organization() {
       };
     });
 
-    return [
-      {
-        id: 'company-root',
-        name: 'Northwind Labs',
-        type: 'root',
-        children: deptNodes
-      }
-    ];
+    return [{ id: 'company-root', name: 'Northwind Labs', type: 'root', children: deptNodes }];
   };
 
-  const treeData = useMemo(() => buildTree(), [departments, teams, employees]);
+  const buildPeopleTree = () => {
+    const empMap = new Map(employees.map(e => [String(e.id), { ...e, type: 'employee', children: [] }]));
+    const roots = [];
+
+    employees.forEach(emp => {
+      const node = empMap.get(String(emp.id));
+      if (emp.managerId && empMap.has(String(emp.managerId))) {
+        const parent = empMap.get(String(emp.managerId));
+        parent.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return [{ id: 'company-root', name: 'Northwind Labs (People)', type: 'root', children: roots }];
+  };
+
+  const treeData = useMemo(() => {
+    return treeViewMode === 'department' ? buildDepartmentTree() : buildPeopleTree();
+  }, [departments, teams, employees, treeViewMode]);
 
   const openModal = (mode, item = null, initialData = {}) => {
     setModalMode(mode);
@@ -305,12 +274,20 @@ export default function Organization() {
   };
 
   const addChildTo = (parent) => {
-    if (parent.type === 'root') {
-      openModal('create', null, { type: 'department' });
-    } else if (parent.type === 'department') {
-      openModal('create', null, { type: 'team', departmentId: parent.id });
-    } else if (parent.type === 'team') {
-      openModal('create', null, { type: 'employee', teamId: parent.id, departmentId: parent.departmentId });
+    if (treeViewMode === 'department') {
+      if (parent.type === 'root') {
+        openModal('create', null, { type: 'department' });
+      } else if (parent.type === 'department') {
+        openModal('create', null, { type: 'team', departmentId: parent.id });
+      } else if (parent.type === 'team') {
+        openModal('create', null, { type: 'employee', teamId: parent.id, departmentId: parent.departmentId });
+      }
+    } else {
+      if (parent.type === 'root') {
+        openModal('create', null, { type: 'employee' });
+      } else if (parent.type === 'employee') {
+        openModal('create', null, { type: 'employee', managerId: parent.id });
+      }
     }
   };
 
@@ -345,7 +322,7 @@ export default function Organization() {
     const deptForTeam = departments.find((d) => d.id === formData.departmentId);
 
     return (
-      <form onSubmit={handleSave} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <form onSubmit={handleSave} className="space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar pr-1">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground">
             {titleAction} {title}
@@ -354,6 +331,35 @@ export default function Organization() {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {isEmp && !editingItem?.id && (
+          <>
+            <div className="mb-5">
+              <label className="block text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-indigo-500" /> Assign Existing Employee
+              </label>
+              <select
+                onChange={(e) => {
+                  const emp = employees.find(emp => String(emp.id) === e.target.value);
+                  if (emp) {
+                    setEditingItem({ ...emp, type: 'employee' });
+                    setFormData({ ...emp, ...formData, type: 'employee' });
+                  }
+                }}
+                className="w-full px-4 py-2.5 bg-background border-2 border-indigo-500/20 rounded-xl text-foreground text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer hover:border-indigo-500/40"
+              >
+                <option value="">-- Select an employee to assign here --</option>
+                {employees.map(e => <option key={e.id} value={e.id}>{e.name} • {e.role}</option>)}
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px bg-border flex-1"></div>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Or Create New Profile</span>
+              <div className="h-px bg-border flex-1"></div>
+            </div>
+          </>
+        )}
 
         {isDept && (
           <>
@@ -686,31 +692,53 @@ export default function Organization() {
 
         {/* Tree View */}
         {activeTab === 'tree' && (
-          <div className="card-elevated border border-border rounded-2xl bg-card p-6 overflow-x-auto">
+          <div className="card-elevated border border-border rounded-2xl bg-card p-6 overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-[15px] text-card-foreground flex items-center gap-2">
                 <Network className="w-4 h-4" />
                 Organization Hierarchy
               </h3>
+              
+              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
+                <button
+                  onClick={() => setTreeViewMode('people')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${treeViewMode === 'people' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  People View
+                </button>
+                <button
+                  onClick={() => setTreeViewMode('department')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${treeViewMode === 'department' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Department View
+                </button>
+              </div>
+
               <button
                 onClick={() => fetchOrgData()}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
               >
                 <Loader2 className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
-            {treeData.map((node) => (
-              <TreeNode
-                key={node.id}
-                node={node}
-                depth={0}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onAddChild={addChildTo}
-                employees={employees}
-              />
-            ))}
+            
+            <div className="org-tree-container w-full overflow-x-auto no-scrollbar py-6">
+              <div className="org-tree">
+                <ul>
+                  {treeData.map((node) => (
+                    <OrgChartNode
+                      key={node.id}
+                      node={node}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onAddChild={addChildTo}
+                      employees={employees}
+                    />
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         )}
 
