@@ -11,31 +11,40 @@ const SERVICE_ACCOUNT_PATH = path.resolve(__dirname, './service-account.json');
 
 export let rtdb = null;
 
-// Initialize Firebase Admin if service account exists
 try {
-  if (fs.existsSync(SERVICE_ACCOUNT_PATH)) {
-    const serviceAccount = JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_PATH, 'utf-8'));
+  let serviceAccount = null;
+
+  // 1. Prefer env var (Vercel / production)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  }
+  // 2. Fallback: local file (dev)
+  else if (fs.existsSync(SERVICE_ACCOUNT_PATH)) {
+    serviceAccount = JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_PATH, 'utf-8'));
+  }
+
+  if (serviceAccount) {
     if (!getApps().length) {
       initializeApp({
         credential: cert(serviceAccount),
-        databaseURL: 'https://attentrack-7d0f5-default-rtdb.asia-southeast1.firebasedatabase.app'
+        databaseURL: process.env.FIREBASE_DATABASE_URL ||
+          'https://attentrack-7d0f5-default-rtdb.asia-southeast1.firebasedatabase.app'
       });
     }
     rtdb = getDatabase();
-    console.log('[Firebase Admin] Initialized Realtime Database successfully with project:', serviceAccount.project_id);
+    console.log('[Firebase Admin] Initialized RTDB for project:', serviceAccount.project_id);
   } else {
-    console.warn('[Firebase Admin] Warning: service-account.json not found!');
+    console.warn('[Firebase Admin] No service account found — set FIREBASE_SERVICE_ACCOUNT env var.');
   }
 } catch (fbErr) {
-  console.warn('[Firebase Admin] Warning: Could not initialize Firebase Admin:', fbErr.message);
+  console.warn('[Firebase Admin] Init failed:', fbErr.message);
 }
 
-// Ensure the db connection is ready
 export const connectDatabase = async () => {
   if (rtdb) {
-    console.log('[DB] Connected to Firebase Realtime Database natively');
+    console.log('[DB] Connected to Firebase Realtime Database');
   } else {
-    console.warn('[DB] Realtime Database not initialized properly. API calls will fail.');
+    console.warn('[DB] Realtime Database not initialized. API calls will fail.');
   }
   return rtdb;
 };
