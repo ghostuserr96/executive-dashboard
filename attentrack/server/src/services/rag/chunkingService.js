@@ -7,16 +7,7 @@ class ChunkingService {
   }
 
   async createLLMChunks(textData, baseMetadata) {
-    console.log(`[ChunkingService] Starting LLM-based chunking...`);
-
-    // Inject page markers into the raw text so Gemini/OpenAI knows the page numbers
-    const fullText = textData.map(t => `--- PAGE ${t.page_number} ---\n${t.text}`).join('\n\n');
-
-    // Safety check for massive documents (fallback to old chunker if > 500k chars)
-    if (fullText.length > 500000) {
-      console.warn(`[ChunkingService] Document too large for LLM chunking (${fullText.length} chars), falling back to character chunker.`);
-      return this.createChunks(textData, baseMetadata);
-    }
+    console.log(`[ChunkingService] Starting LLM-based chunking in batches...`);
 
     let ai;
     let modelName;
@@ -24,7 +15,7 @@ class ChunkingService {
     const groqKey = process.env.GROQ_RAG_API_KEY || process.env.GROQ_API_KEY;
     if (groqKey) {
       ai = new OpenAI({ apiKey: groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      modelName = "openai/gpt-oss-120b"; // 30K TPM — supports larger documents
+      modelName = "llama3-8b-8192"; // 30K TPM free tier, 8K context limit
     } else if (process.env.OPENAI_API_KEY) {
       ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       modelName = "gpt-4o-mini";
@@ -33,6 +24,42 @@ class ChunkingService {
       modelName = "llama3";
     }
 
+    const finalChunks = [];
+    let currentBatchText = "";
+    
+    // 25,000 chars is roughly 6,000 tokens, safely under 8K context limits
+    const MAX_CHARS_PER_BATCH = 25000; 
+
+    for (const page of textData) {
+      const pageString = `--- PAGE ${page.page_number} ---\n${page.text}\n\n`;
+      
+      if (currentBatchText.length + pageString.length > MAX_CHARS_PER_BATCH && currentBatchText.length > 0) {
+        const batchChunks = await this._processLLMBatch(ai, modelName, currentBatchText, baseMetadata);
+        finalChunks.push(...batchChunks);
+        currentBatchText = "";
+      }
+      
+      currentBatchText += pageString;
+    }
+    
+    if (currentBatchText.length > 0) {
+      const batchChunks = await this._processLLMBatch(ai, modelName, currentBatchText, baseMetadata);
+      finalChunks.push(...batchChunks);
+    }
+
+    console.log(`[ChunkingService] LLM chunking successful. Created ${finalChunks.length} semantic chunks.`);
+    
+    // Ensure all chunks have a valid sequential index
+    return finalChunks.map((chunk, index) => ({
+      text: chunk.text,
+      metadata: {
+        ...chunk.metadata,
+        chunk_index: index
+      }
+    }));
+  }
+
+  async _processLLMBatch(ai, modelName, batchText, baseMetadata) {
     const prompt = `You are an expert HR document parser.
 
 Your task is to process employee-related documents such as payslips, salary slips, offer letters, and HR records, and convert them into clean, structured, semantically meaningful chunks optimized for embedding in a RAG system.
@@ -57,7 +84,6 @@ Return ONLY valid JSON in this format (Do not use markdown blocks, output raw JS
   },
   "chunks": [
     {
-      "chunk_index": 0,
       "page_number": 1,
       "section": "Employee Information",
       "text": "Employee Name: ... | Department: ... | Designation: ..."
@@ -66,26 +92,31 @@ Return ONLY valid JSON in this format (Do not use markdown blocks, output raw JS
 }
 
 RAW DOCUMENT TEXT:
-${fullText}
+${batchText}
 `;
 
-    const result = await ai.chat.completions.create({
-      model: modelName,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2
-    });
+    let result;
+    try {
+      result = await ai.chat.completions.create({
+        model: modelName,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2
+      });
+    } catch (llmError) {
+      console.warn(`[ChunkingService] LLM batch failed (${llmError.message}). Skipping this batch.`);
+      return []; // Skip this batch if it strictly fails (or implement retry logic)
+    }
 
     let responseText = result.choices[0].message.content.trim();
 
-    // Strip markdown code blocks if present
     if (responseText.startsWith("\`\`\`")) {
-      const lines = responseText.split("\\n");
+      const lines = responseText.split("\n");
       if (lines.length > 1) {
         lines.shift();
         if (lines[lines.length - 1].trim() === "\`\`\`") {
           lines.pop();
         }
-        responseText = lines.join("\\n").trim();
+        responseText = lines.join("\n").trim();
       }
     }
 
@@ -93,23 +124,22 @@ ${fullText}
     try {
       parsedData = JSON.parse(responseText);
     } catch (e) {
-      // Fallback regex logic to extract JSON if trailing text exists
       try {
-        const match = responseText.match(/\\{.*\\}/s);
+        const match = responseText.match(/\{.*\}/s);
         if (match) {
           parsedData = JSON.parse(match[0]);
         } else {
           throw new Error("No JSON found");
         }
       } catch (e2) {
-        console.error("[ChunkingService] LLM returned invalid JSON, falling back.", e.message);
-        return this.createChunks(textData, baseMetadata);
+        console.error(`[ChunkingService] LLM returned invalid JSON for batch, skipping.`);
+        return [];
       }
     }
 
     if (!parsedData.chunks || !Array.isArray(parsedData.chunks)) {
-      console.error("[ChunkingService] LLM returned JSON without chunks array, falling back.");
-      return this.createChunks(textData, baseMetadata);
+      console.error("[ChunkingService] LLM returned JSON without chunks array for batch, skipping.");
+      return [];
     }
 
     const mergedMetadata = {
@@ -117,18 +147,14 @@ ${fullText}
       ...baseMetadata
     };
 
-    const finalChunks = parsedData.chunks.map((chunk, index) => ({
+    return parsedData.chunks.map(chunk => ({
       text: chunk.text,
       metadata: {
         ...mergedMetadata,
-        chunk_index: chunk.chunk_index || index,
-        page_number: chunk.page_number || 1, // Fallback to 1 if LLM missed it
+        page_number: chunk.page_number || 1,
         section: chunk.section || "General"
       }
     }));
-
-    console.log(`[ChunkingService] LLM chunking successful. Created ${finalChunks.length} semantic chunks.`);
-    return finalChunks;
   }
 
   createChunks(textData, baseMetadata) {
