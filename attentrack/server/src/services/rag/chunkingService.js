@@ -113,8 +113,8 @@ ${fullText}
     }
 
     const mergedMetadata = {
-      ...baseMetadata,
-      ...(parsedData.metadata || {})
+      ...(parsedData.metadata || {}),
+      ...baseMetadata
     };
 
     const finalChunks = parsedData.chunks.map((chunk, index) => ({

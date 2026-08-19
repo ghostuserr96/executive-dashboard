@@ -8,6 +8,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { HTTP_STATUS } from '../constants/httpStatusCodes.js';
 import crypto from 'crypto';
 import { config } from '../config/env.js';
+import { pipelineService } from '../services/rag/pipelineService.js';
 
 const saveDocumentMeta = async (docData) => {
   const id = Date.now();
@@ -30,6 +31,29 @@ const saveDocumentMeta = async (docData) => {
   };
   await rtdb.ref(`documents/${id}`).set(doc);
   return doc;
+};
+
+const triggerBackgroundIngestion = async (documentId, url, folder, name) => {
+  try {
+    console.log(`[DocumentController] Starting background ingestion for doc: ${documentId}`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download document from URL: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const metadata = {
+      document_id: documentId,
+      document_name: name || 'Document',
+      folder: folder || 'General',
+    };
+
+    await pipelineService.processDocument(buffer, metadata);
+    console.log(`[DocumentController] Background ingestion complete for doc: ${documentId}`);
+  } catch (error) {
+    console.error(`[DocumentController] Background ingestion failed: ${error.message}`);
+  }
 };
 
 export const getDocuments = asyncHandler(async (req, res) => {
@@ -93,6 +117,12 @@ export const createDocument = asyncHandler(async (req, res) => {
     };
     
     const doc = await saveDocumentMeta(docData);
+    
+    // Trigger background ingestion (non-blocking)
+    if (doc.url) {
+      triggerBackgroundIngestion(doc.id, doc.url, doc.folder, doc.name);
+    }
+    
     return res.status(HTTP_STATUS.CREATED).json(new ApiResponse(HTTP_STATUS.CREATED, doc, 'Document metadata saved successfully'));
   }
 
@@ -131,6 +161,12 @@ export const createDocument = asyncHandler(async (req, res) => {
   };
 
   const doc = await saveDocumentMeta(docData);
+  
+  // Trigger background ingestion (non-blocking)
+  if (doc.url) {
+    triggerBackgroundIngestion(doc.id, doc.url, doc.folder, doc.name);
+  }
+
   res.status(HTTP_STATUS.CREATED).json(new ApiResponse(HTTP_STATUS.CREATED, doc, 'Document uploaded successfully'));
 });
 
