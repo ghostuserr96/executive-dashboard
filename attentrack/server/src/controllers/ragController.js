@@ -7,7 +7,11 @@ import { chatPipeline } from '../services/rag/chatPipeline.js';
 import { vectorDbService } from '../services/rag/vectorDbService.js';
 
 export const ingestDocument = asyncHandler(async (req, res) => {
-  const { documentId, url, folder, name } = req.body;
+  let { documentId, url, folder, name } = req.body;
+
+  if (documentId && !isNaN(Number(documentId))) {
+    documentId = Number(documentId);
+  }
 
   if (!documentId || !url) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Document ID and URL are required for ingestion');
@@ -49,7 +53,11 @@ export const ingestDocument = asyncHandler(async (req, res) => {
 });
 
 export const chatWithDocument = asyncHandler(async (req, res) => {
-  const { query, documentId, history } = req.body;
+  let { query, documentId, history } = req.body;
+
+  if (documentId && !isNaN(Number(documentId))) {
+    documentId = Number(documentId);
+  }
 
   if (!query || !documentId) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Query and Document ID are required for chat');
