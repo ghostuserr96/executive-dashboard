@@ -15,7 +15,7 @@ class ChunkingService {
     const groqKey = process.env.GROQ_RAG_API_KEY || process.env.GROQ_API_KEY;
     if (groqKey) {
       ai = new OpenAI({ apiKey: groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      modelName = "llama-3.1-8b-instant"; // Active Groq model
+      modelName = "llama3-8b-8192"; // 30K TPM free tier, 8K context limit
     } else if (process.env.OPENAI_API_KEY) {
       ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       modelName = "gpt-4o-mini";
