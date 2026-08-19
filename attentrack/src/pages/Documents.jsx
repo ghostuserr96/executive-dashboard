@@ -199,6 +199,13 @@ export default function Documents() {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Optional: Add a sensible max file limit for Cloudinary, e.g., 25MB
+      if (file.size > 25 * 1024 * 1024) {
+        setUploadError(`File too large. Maximum allowed size is 25 MB.`);
+        setSelectedFile(null);
+        e.target.value = ''; // Reset input
+        return;
+      }
       setSelectedFile(file);
       setUploadError(null);
       setUploadSuccess(false);

@@ -6,6 +6,8 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { HTTP_STATUS } from '../constants/httpStatusCodes.js';
+import crypto from 'crypto';
+import { config } from '../config/env.js';
 
 const saveDocumentMeta = async (docData) => {
   const id = Date.now();
@@ -49,9 +51,52 @@ export const getDocumentById = asyncHandler(async (req, res) => {
   res.status(HTTP_STATUS.OK).json(new ApiResponse(HTTP_STATUS.OK, doc, 'Document fetched successfully'));
 });
 
+export const getUploadSignature = asyncHandler(async (req, res) => {
+  const folder = req.query.folder || 'documents/General';
+  const timestamp = Math.floor(Date.now() / 1000);
+  const apiSecret = config.cloudinaryApiSecret;
+  const apiKey = config.cloudinaryApiKey;
+  const cloudName = config.cloudinaryCloudName;
+
+  if (!apiSecret || !apiKey || !cloudName) {
+    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Cloudinary credentials not configured');
+  }
+
+  const paramsToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+  const signature = crypto.createHash('sha1').update(paramsToSign).digest('hex');
+
+  res.status(HTTP_STATUS.OK).json(new ApiResponse(HTTP_STATUS.OK, {
+    signature,
+    timestamp,
+    apiKey,
+    cloudName,
+    folder
+  }, 'Signature generated successfully'));
+});
+
 export const createDocument = asyncHandler(async (req, res) => {
-  let fileData = null;
   const folder = req.body?.folder || 'General';
+
+  // If the frontend already uploaded directly to Cloudinary and provided the URL
+  if (req.body.directUpload && req.body.url) {
+    const docData = {
+      name: req.body.name || 'uploaded_document',
+      folder: folder,
+      size: req.body.size || 0,
+      url: req.body.url,
+      publicId: req.body.publicId || 'local_fallback',
+      resourceType: req.body.resourceType || 'raw',
+      mimeType: req.body.mimeType || 'application/octet-stream',
+      uploadedBy: req.body.uploadedBy || '',
+      uploadedByName: req.body.uploadedByName || '',
+      description: req.body.description || ''
+    };
+    
+    const doc = await saveDocumentMeta(docData);
+    return res.status(HTTP_STATUS.CREATED).json(new ApiResponse(HTTP_STATUS.CREATED, doc, 'Document metadata saved successfully'));
+  }
+
+  let fileData = null;
 
   if (req.body?.url && req.body.url.startsWith('data:')) {
     fileData = req.body.url;

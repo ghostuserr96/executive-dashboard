@@ -4,10 +4,13 @@ import {
   getDocumentById,
   createDocument,
   updateDocument,
-  deleteDocument
+  deleteDocument,
+  getUploadSignature
 } from '../controllers/documentController.js';
 
 const router = Router();
+
+router.get('/upload-signature', getUploadSignature);
 
 router.route('/')
   .get(getDocuments)

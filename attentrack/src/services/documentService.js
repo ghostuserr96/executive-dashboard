@@ -12,34 +12,51 @@ export const documentService = {
   getById: (id) => apiRequest(`/documents/${id}`),
 
   upload: async (file, folder = 'General', description = '', uploadedBy = '', uploadedByName = '') => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result;
-          const mimeType = file.type || 'application/octet-stream';
-          const res = await apiRequest('/documents', {
-            method: 'POST',
-            body: {
-              name: file.name,
-              folder,
-              size: file.size,
-              url: base64,
-              publicId: 'local_upload',
-              mimeType,
-              uploadedBy,
-              uploadedByName,
-              description
-            }
-          });
-          resolve(res);
-        } catch (err) {
-          reject(err);
+    try {
+      // 1. Get upload signature from our backend
+      const sigRes = await apiRequest(`/documents/upload-signature?folder=documents/${folder}`);
+      const { signature, timestamp, apiKey, cloudName, folder: cloudFolder } = sigRes.data;
+
+      // 2. Upload directly to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('folder', cloudFolder);
+
+      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!cloudRes.ok) {
+        const errorData = await cloudRes.json();
+        throw new Error(errorData.error?.message || 'Failed to upload to Cloudinary');
+      }
+
+      const cloudData = await cloudRes.json();
+
+      // 3. Save metadata to our backend
+      return await apiRequest('/documents', {
+        method: 'POST',
+        body: {
+          directUpload: true,
+          name: file.name,
+          folder,
+          size: file.size,
+          url: cloudData.secure_url || cloudData.url,
+          publicId: cloudData.public_id,
+          resourceType: cloudData.resource_type,
+          mimeType: file.type || 'application/octet-stream',
+          uploadedBy,
+          uploadedByName,
+          description
         }
-      };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
+      });
+    } catch (err) {
+      throw err;
+    }
   },
 
   update: (id, updateData) => apiRequest(`/documents/${id}`, { method: 'PUT', body: updateData }),
