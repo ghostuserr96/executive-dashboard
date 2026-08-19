@@ -8,9 +8,16 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
+const parseCorsOrigin = (originStr) => {
+  if (!originStr) return 'http://localhost:5173';
+  if (originStr === '*') return '*';
+  if (typeof originStr === 'string') return originStr.split(',').map(o => o.trim());
+  return originStr;
+};
+
 // Middlewares
 const corsOptions = {
-  origin: config.corsOrigin,
+  origin: parseCorsOrigin(config.corsOrigin),
   credentials: true,
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
