@@ -39,8 +39,12 @@ class ChatPipeline {
       // Build the prompt using contexts
       let contextText = contexts.map((c, i) => `Context [${i + 1}]:\n${c.text}`).join('\n\n');
 
-      const systemPrompt = `You are a helpful assistant. Use the following pieces of retrieved context to answer the question.
-If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+      const systemPrompt = `You are DocuBot, a helpful AI assistant analyzing a document for the user.
+You are provided with snippets of the document in the "Contexts" section below.
+If the user asks you to summarize, summarize the provided Contexts as best as you can.
+If the user asks a specific question, answer it using ONLY the provided Contexts.
+If the answer cannot be deduced from the Contexts, say that you don't have enough information from the document.
+Keep your answers clear, concise, and helpful.
 
 Contexts:
 ${contextText}`;

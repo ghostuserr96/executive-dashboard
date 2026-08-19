@@ -56,12 +56,12 @@ export const chatWithDocument = asyncHandler(async (req, res) => {
   }
 
   try {
-    const request = {
-      query,
-      // Pass the documentId as the filter (e.g. into the document_name filter if that's how we set up the vector db)
-      filters: { document_id: documentId },
-      top_k: 5
-    };
+      const request = {
+        query,
+        // Pass the documentId as the filter (e.g. into the document_name filter if that's how we set up the vector db)
+        filters: { document_id: documentId },
+        top_k: query.toLowerCase().includes('summarize') ? 15 : 5
+      };
 
     const result = await chatPipeline.runChatPipeline(request, history || []);
 
