@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Bot, User, Loader2, FileText, Database, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function DocumentChat({ isOpen, onClose, document }) {
   const [messages, setMessages] = useState([]);
@@ -175,13 +176,20 @@ export default function DocumentChat({ isOpen, onClose, document }) {
                   </div>
                   <div className="text-[15px] text-[#dbdee1] leading-relaxed w-full">
                     <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
                       components={{
                         p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
                         strong: ({node, ...props}) => <strong className="font-bold text-white" {...props} />,
                         ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
                         ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />,
                         li: ({node, ...props}) => <li {...props} />,
-                        code: ({inline, ...props}) => inline ? <code className="bg-[#1e1f22] px-1.5 py-0.5 rounded-md text-[#f2f3f5]" {...props} /> : <pre className="bg-[#1e1f22] p-3 rounded-xl overflow-x-auto my-2 text-sm"><code {...props} /></pre>
+                        code: ({inline, ...props}) => inline ? <code className="bg-[#1e1f22] px-1.5 py-0.5 rounded-md text-[#f2f3f5]" {...props} /> : <pre className="bg-[#1e1f22] p-3 rounded-xl overflow-x-auto my-2 text-sm"><code {...props} /></pre>,
+                        table: ({node, ...props}) => <div className="overflow-x-auto my-4 rounded-lg border border-[#1e1f22]"><table className="w-full text-left border-collapse" {...props} /></div>,
+                        thead: ({node, ...props}) => <thead className="bg-[#1e1f22] text-[#f2f3f5]" {...props} />,
+                        tbody: ({node, ...props}) => <tbody className="divide-y divide-[#1e1f22]" {...props} />,
+                        tr: ({node, ...props}) => <tr className="hover:bg-[#2b2d31]/50 transition-colors" {...props} />,
+                        th: ({node, ...props}) => <th className="px-4 py-3 font-semibold border-b border-[#1e1f22]" {...props} />,
+                        td: ({node, ...props}) => <td className="px-4 py-3 text-[#dbdee1]" {...props} />
                       }}
                     >
                       {msg.content}
