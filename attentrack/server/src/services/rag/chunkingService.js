@@ -15,7 +15,7 @@ class ChunkingService {
     const groqKey = process.env.GROQ_RAG_API_KEY || process.env.GROQ_API_KEY;
     if (groqKey) {
       ai = new OpenAI({ apiKey: groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      modelName = "llama3-8b-8192"; // 30K TPM free tier, 8K context limit
+      modelName = "openai/gpt-oss-120b"; // Restored exact model from API key
     } else if (process.env.OPENAI_API_KEY) {
       ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       modelName = "gpt-4o-mini";
@@ -96,15 +96,25 @@ ${batchText}
 `;
 
     let result;
-    try {
-      result = await ai.chat.completions.create({
-        model: modelName,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2
-      });
-    } catch (llmError) {
-      console.warn(`[ChunkingService] LLM batch failed (${llmError.message}). Skipping this batch.`);
-      return []; // Skip this batch if it strictly fails (or implement retry logic)
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        result = await ai.chat.completions.create({
+          model: modelName,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2
+        });
+        break; // Success
+      } catch (llmError) {
+        console.warn(`[ChunkingService] LLM batch failed (${llmError.message}). Retries left: ${retries - 1}`);
+        retries--;
+        if (retries === 0) {
+          console.error(`[ChunkingService] Skipping batch after max retries.`);
+          return []; // Skip if completely failed
+        }
+        // Wait 20 seconds before retrying to let the per-minute rate limit reset
+        await new Promise(resolve => setTimeout(resolve, 20000));
+      }
     }
 
     let responseText = result.choices[0].message.content.trim();

@@ -15,7 +15,7 @@ class ChatPipeline {
     if (this.groqKey) {
       console.log("Using Groq API for Chat Pipeline");
       this.ai = new OpenAI({ apiKey: this.groqKey, baseURL: "https://api.groq.com/openai/v1" });
-      this.model = 'llama3-8b-8192'; // Standard Groq model available for this API key
+      this.model = 'openai/gpt-oss-120b'; // Restored exact model from API key
     } else if (this.openAiKey) {
       console.log("Using OpenAI API for Chat Pipeline");
       this.ai = new OpenAI({ apiKey: this.openAiKey });
