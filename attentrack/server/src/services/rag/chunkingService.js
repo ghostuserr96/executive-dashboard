@@ -47,6 +47,11 @@ class ChunkingService {
       finalChunks.push(...batchChunks);
     }
 
+    if (finalChunks.length === 0) {
+      console.warn(`[ChunkingService] LLM chunking failed or returned 0 chunks. Falling back to character chunking.`);
+      return this.createChunks(textData, baseMetadata);
+    }
+
     console.log(`[ChunkingService] LLM chunking successful. Created ${finalChunks.length} semantic chunks.`);
     
     // Ensure all chunks have a valid sequential index
