@@ -567,7 +567,7 @@ export default function CandidateApply() {
 
               {/* STEP TABS NAVIGATION (WIZARD MODE) */}
               {viewMode === 'wizard' && (
-                <div className={darkMode ? 'rounded-2xl p-2 flex flex-nowrap items-center justify-start sm:justify-between text-xs font-bold overflow-x-auto border bg-[#141928] border-purple-700/25 shadow-lg gap-2' : 'rounded-2xl p-2 flex flex-nowrap items-center justify-start sm:justify-between text-xs font-bold overflow-x-auto border bg-background border-slate-200 shadow-xs gap-2'}>
+                <div className={darkMode ? 'rounded-2xl p-2 flex flex-nowrap items-center justify-start sm:justify-between text-xs font-bold overflow-x-auto no-scrollbar border bg-[#141928] border-purple-700/25 shadow-lg gap-2' : 'rounded-2xl p-2 flex flex-nowrap items-center justify-start sm:justify-between text-xs font-bold overflow-x-auto no-scrollbar border bg-background border-slate-200 shadow-xs gap-2'}>
                   {[
                     { num: 1, label: '1. Contact', icon: <User className="w-3.5 h-3.5" /> },
                     { num: 2, label: '2. Skills', icon: <Award className="w-3.5 h-3.5" /> },

@@ -22,7 +22,8 @@ import {
   Target,
   RefreshCw,
   Briefcase,
-  DollarSign
+  DollarSign,
+  Phone
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDataContext } from '../context/DataContext';
@@ -444,21 +445,18 @@ export default function Recruitment() {
                             </div>
 
                             <div className="text-[11px] text-muted-foreground space-y-1">
-                              <div className="truncate">📧 {cand.email}</div>
-                              {cand.phone && <div>📞 {cand.phone}</div>}
+                              <div className="flex items-center gap-1.5 truncate"><Mail className="w-3 h-3 text-muted-foreground shrink-0" /> {cand.email}</div>
+                              {cand.phone && <div className="flex items-center gap-1.5 truncate"><Phone className="w-3 h-3 text-muted-foreground shrink-0" /> {cand.phone}</div>}
                             </div>
 
                             {/* Quick Stage Transition & Delete Buttons */}
                             <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-1 text-[11px]" onClick={e => e.stopPropagation()}>
-                              <select
+                              <CustomSelect
                                 value={cand.stage || cand.status || 'Applied'}
-                                onChange={(e) => handleMoveStage(cand.id, e.target.value)}
-                                className="bg-background border border-border text-foreground rounded-lg px-2 py-1 text-[11px] font-medium focus:outline-none focus:border-primary cursor-pointer flex-1"
-                              >
-                                {PIPELINE_STAGES.map(s => (
-                                  <option key={s} value={s}>{s}</option>
-                                ))}
-                              </select>
+                                onChange={(val) => handleMoveStage(cand.id, val)}
+                                options={PIPELINE_STAGES.map(s => ({ label: s, value: s }))}
+                                className="!h-7 !py-1 !px-2 !text-[11px] !rounded-lg flex-1"
+                              />
                               <button
                                 type="button"
                                 title="Delete candidate & clean up resume"
