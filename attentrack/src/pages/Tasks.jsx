@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import {
   Plus, MoreHorizontal, MessageSquare, Paperclip, X,
   CheckCircle2, Trash2, Edit3, GripVertical, Calendar,
-  User, Flag, AlignLeft, ChevronRight, Loader2, AlertCircle
+  User, Flag, AlignLeft, ChevronLeft, ChevronRight, Loader2, AlertCircle
 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import { taskService } from '../services/taskService';
@@ -37,8 +37,13 @@ function formatDate(dateStr) {
   } catch { return dateStr; }
 }
 
-function TaskCard({ task, onDragStart, onDragEnd, onClick }) {
+function TaskCard({ task, onDragStart, onDragEnd, onClick, onMove }) {
   const isDone = task.status === 'Done';
+  
+  const colIndex = COLUMNS.findIndex(col => col.id === task.status);
+  const canMoveLeft = colIndex > 0;
+  const canMoveRight = colIndex < COLUMNS.length - 1;
+
   return (
     <div
       draggable
@@ -48,11 +53,26 @@ function TaskCard({ task, onDragStart, onDragEnd, onClick }) {
       className="group bg-card border border-border/60 rounded-xl p-4 space-y-3 cursor-grab active:cursor-grabbing hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 select-none"
       style={{ userSelect: 'none' }}
     >
-      {/* Top row: ID + priority */}
+      {/* Top row: move buttons + priority */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-mono text-muted-foreground/70 font-semibold tracking-wider">
-          T-{task.id}
-        </span>
+        <div className="flex items-center gap-0.5">
+          <button 
+            type="button"
+            disabled={!canMoveLeft}
+            onClick={(e) => { e.stopPropagation(); onMove(task, -1); }} 
+            className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer" 
+            title="Move Left">
+            <ChevronLeft className="w-4 h-4"/>
+          </button>
+          <button 
+            type="button"
+            disabled={!canMoveRight}
+            onClick={(e) => { e.stopPropagation(); onMove(task, 1); }} 
+            className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer" 
+            title="Move Right">
+            <ChevronRight className="w-4 h-4"/>
+          </button>
+        </div>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.Medium}`}>
           {task.priority}
         </span>
@@ -550,6 +570,21 @@ export default function Tasks() {
     setIsDragging(false);
   }, [refreshAll]);
 
+  const handleMoveTask = useCallback(async (task, direction) => {
+    const currentIndex = COLUMNS.findIndex(col => col.id === task.status);
+    const newIndex = currentIndex + direction;
+    if (newIndex >= 0 && newIndex < COLUMNS.length) {
+      const newStatus = COLUMNS[newIndex].id;
+      try {
+        await taskService.updateStatus(task.id, newStatus);
+        await refreshAll(true);
+        showSuccess(`"${task.title}" moved to ${newStatus}`);
+      } catch (err) {
+        showError('Failed to move task: ' + err.message);
+      }
+    }
+  }, [refreshAll]);
+
   // ── CRUD Handlers ────────────────────────────────────────────────────────
   const handleCreate = async (formData) => {
     await taskService.create(formData);
@@ -572,9 +607,21 @@ export default function Tasks() {
     showSuccess('Task deleted.');
   };
 
-  // Group tasks by column status
+  // Group tasks by column status and sort by priority
+  const PRIORITY_WEIGHT = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
   const columnTasks = COLUMNS.reduce((acc, col) => {
-    acc[col.id] = (tasks || []).filter(t => t.status === col.id);
+    acc[col.id] = (tasks || [])
+      .filter(t => t.status === col.id)
+      .sort((a, b) => {
+        // 1. Sort by Priority (Highest first)
+        const weightA = PRIORITY_WEIGHT[a.priority] || 0;
+        const weightB = PRIORITY_WEIGHT[b.priority] || 0;
+        if (weightA !== weightB) return weightB - weightA;
+        // 2. If priorities are the same, sort by Due Date (Soonest first)
+        const dateA = new Date(a.dueDate || '2099-12-31').getTime();
+        const dateB = new Date(b.dueDate || '2099-12-31').getTime();
+        return dateA - dateB;
+      });
     return acc;
   }, {});
 
@@ -680,6 +727,7 @@ export default function Tasks() {
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                         onClick={setSelectedTask}
+                        onMove={handleMoveTask}
                       />
                     ))
                   )}

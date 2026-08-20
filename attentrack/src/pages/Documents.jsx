@@ -18,6 +18,7 @@ import { useDataContext } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { documentService } from '../services/documentService';
 import DocumentChat from '../components/DocumentChat';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 const FOLDERS = ['All', 'Contracts', 'Payslips', 'Policies', 'Certificates', 'IDs & Proofs', 'Onboarding', 'General'];
 
@@ -432,19 +433,19 @@ export default function Documents() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1.5">Folder</label>
-                <select
+                <CustomSelect
                   value={uploadFolder}
-                  onChange={(e) => setUploadFolder(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-muted/60 border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option>General</option>
-                  <option>Contracts</option>
-                  <option>Payslips</option>
-                  <option>Policies</option>
-                  <option>Certificates</option>
-                  <option>IDs & Proofs</option>
-                  <option>Onboarding</option>
-                </select>
+                  onChange={(val) => setUploadFolder(val)}
+                  options={[
+                    { label: 'General', value: 'General' },
+                    { label: 'Contracts', value: 'Contracts' },
+                    { label: 'Payslips', value: 'Payslips' },
+                    { label: 'Policies', value: 'Policies' },
+                    { label: 'Certificates', value: 'Certificates' },
+                    { label: 'IDs & Proofs', value: 'IDs & Proofs' },
+                    { label: 'Onboarding', value: 'Onboarding' }
+                  ]}
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1.5">Description (optional)</label>

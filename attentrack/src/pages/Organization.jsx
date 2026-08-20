@@ -18,11 +18,13 @@ import {
   Network,
   Settings2,
   FolderTree,
+  Component,
   ArrowRight
 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import { organizationService } from '../services/organizationService';
 import { employeeService } from '../services/employeeService';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 const STATUS_COLORS = {
   Active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -61,9 +63,9 @@ const OrgChartNode = ({ node, onEdit, onDelete, onAddChild, employees }) => {
             isTeam ? 'border-cyan-500/20 shadow-cyan-500/5 hover:border-cyan-500/40' :
             'border-slate-500/20 shadow-slate-500/5 hover:border-slate-500/40'
         }`}>
-          
-          {isDept && node.type !== 'root' && <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center mb-2"><Building2 className="w-4 h-4 text-blue-400" /></div>}
-          {isTeam && <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-2"><Briefcase className="w-4 h-4 text-cyan-400" /></div>}
+          <div className="flex flex-col items-center">
+          {isDept && node.type !== 'root' && <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center mb-2"><Component className="w-4 h-4 text-blue-400" /></div>}
+          {isTeam && <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-2"><Network className="w-4 h-4 text-cyan-400" /></div>}
           {isEmp && (
             <div className="w-10 h-10 rounded-full bg-muted overflow-hidden mb-2 shadow-sm border border-border">
               {node.avatar ? (
@@ -105,6 +107,7 @@ const OrgChartNode = ({ node, onEdit, onDelete, onAddChild, employees }) => {
                 </button>
               </>
             )}
+          </div>
           </div>
         </div>
       </div>
@@ -338,19 +341,18 @@ export default function Organization() {
               <label className="block text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                 <UserCheck className="w-4 h-4 text-indigo-500" /> Assign Existing Employee
               </label>
-              <select
-                onChange={(e) => {
-                  const emp = employees.find(emp => String(emp.id) === e.target.value);
+              <CustomSelect
+                placeholder="-- Select an employee to assign here --"
+                value=""
+                onChange={(val) => {
+                  const emp = employees.find(emp => String(emp.id) === val);
                   if (emp) {
                     setEditingItem({ ...emp, type: 'employee' });
                     setFormData({ ...emp, ...formData, type: 'employee' });
                   }
                 }}
-                className="w-full px-4 py-2.5 bg-background border-2 border-indigo-500/20 rounded-xl text-foreground text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer hover:border-indigo-500/40"
-              >
-                <option value="">-- Select an employee to assign here --</option>
-                {employees.map(e => <option key={e.id} value={e.id}>{e.name} • {e.role}</option>)}
-              </select>
+                options={[{ label: '-- Select an employee to assign here --', value: '' }, ...employees.map(e => ({ label: `${e.name} • ${e.role}`, value: String(e.id) }))]}
+              />
             </div>
             
             <div className="flex items-center gap-3 mb-5">
@@ -412,17 +414,12 @@ export default function Organization() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Department *</label>
-              <select
-                required
+              <CustomSelect
+                placeholder="Select department"
                 value={formData.departmentId || ''}
-                onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="">Select department</option>
-                {deptOptions.map((d) => (
-                  <option key={d.value} value={d.value}>{d.label}</option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, departmentId: val })}
+                options={[{ label: 'Select department', value: '' }, ...deptOptions]}
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Description</label>
@@ -474,70 +471,54 @@ export default function Organization() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">Level</label>
-                <select
+                <CustomSelect
                   value={formData.level || 'Individual'}
-                  onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                >
-                  {LEVEL_ORDER.map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData({ ...formData, level: val })}
+                  options={LEVEL_ORDER.map(l => ({ label: l, value: l }))}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">Department</label>
-                <select
+                <CustomSelect
+                  placeholder="Select"
                   value={formData.department || ''}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select</option>
-                  {deptOptions.map((d) => (
-                    <option key={d.value} value={d.label}>{d.label}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData({ ...formData, department: val })}
+                  options={[{ label: 'Select', value: '' }, ...deptOptions.map(d => ({ label: d.label, value: d.label }))]}
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">Team</label>
-                <select
+                <CustomSelect
+                  placeholder="Select"
                   value={formData.teamId || ''}
-                  onChange={(e) => setFormData({ ...formData, teamId: e.target.value || null })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-                >
-                  <option value="">Select</option>
-                  {teamOptions.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setFormData({ ...formData, teamId: val || null })}
+                  options={[{ label: 'Select', value: '' }, ...teamOptions]}
+                />
               </div>
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Reports To (Manager)</label>
-              <select
+              <CustomSelect
+                placeholder="None (Top level)"
                 value={formData.managerId || ''}
-                onChange={(e) => setFormData({ ...formData, managerId: e.target.value || null })}
-                className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="">None (Top level)</option>
-                {managerOptions.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, managerId: val || null })}
+                options={[{ label: 'None (Top level)', value: '' }, ...managerOptions]}
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground mb-1">Status</label>
-              <select
+              <CustomSelect
                 value={formData.status || 'Active'}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Terminated">Terminated</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, status: val })}
+                options={[
+                  { label: 'Active', value: 'Active' },
+                  { label: 'Inactive', value: 'Inactive' },
+                  { label: 'On Leave', value: 'On Leave' },
+                  { label: 'Terminated', value: 'Terminated' }
+                ]}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -621,9 +602,9 @@ export default function Organization() {
           <div className="flex gap-2">
             <button
               onClick={() => openModal('create', null, { type: 'department' })}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 rounded-xl text-sm font-medium"
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95 cursor-pointer"
             >
-              <Building2 className="w-4 h-4" />
+              <Component className="w-4 h-4" />
               Add Department
             </button>
             <button
@@ -640,7 +621,7 @@ export default function Organization() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="card-elevated p-5 border border-border rounded-2xl bg-card flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-              <Building2 className="w-6 h-6" />
+              <Component className="w-6 h-6" />
             </div>
             <div>
               <div className="text-2xl font-bold text-foreground">{totalDepartments}</div>
@@ -649,7 +630,7 @@ export default function Organization() {
           </div>
           <div className="card-elevated p-5 border border-border rounded-2xl bg-card flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
-              <Briefcase className="w-6 h-6" />
+              <Network className="w-6 h-6" />
             </div>
             <div>
               <div className="text-2xl font-bold text-foreground">{totalTeams}</div>
@@ -668,11 +649,11 @@ export default function Organization() {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-border">
+        <div className="flex flex-wrap gap-2 md:gap-4 mb-6 border-b border-border">
           {[
-            { key: 'tree', label: 'Hierarchy Tree', icon: FolderTree },
-            { key: 'departments', label: `Departments (${totalDepartments})`, icon: Building2 },
-            { key: 'teams', label: `Teams (${totalTeams})`, icon: Briefcase },
+            { key: 'tree', label: 'Org Chart', icon: FolderTree },
+            { key: 'departments', label: `Departments (${totalDepartments})`, icon: Component },
+            { key: 'teams', label: `Teams (${totalTeams})`, icon: Network },
             { key: 'employees', label: `Employees (${totalEmployees})`, icon: Users },
           ].map((tab) => (
             <button
@@ -767,22 +748,28 @@ export default function Organization() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {departments.map((dept) => (
+                  {departments.map((dept) => {
+                    const deptTeams = teams.filter(t => String(t.departmentId) === String(dept.id));
+                    const teamCount = deptTeams.length;
+                    const deptTeamIds = deptTeams.map(t => String(t.id));
+                    const activeEmployees = employees.filter(e => deptTeamIds.includes(String(e.teamId))).length;
+                    
+                    return (
                     <tr key={dept.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                            <Building2 className="w-4 h-4 text-blue-400" />
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
+                            <Component className="w-4 h-4 text-blue-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="font-medium text-foreground">{dept.name}</div>
                             {dept.description && <div className="text-xs text-muted-foreground">{dept.description}</div>}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{dept.location || '—'}</td>
-                      <td className="px-4 py-3 text-foreground">{dept.stats?.teamCount || 0}</td>
-                      <td className="px-4 py-3 text-foreground">{dept.stats?.activeEmployees || 0}</td>
+                      <td className="px-4 py-3 text-foreground">{teamCount}</td>
+                      <td className="px-4 py-3 text-foreground">{activeEmployees}</td>
                       <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
                         <button onClick={() => handleEdit(dept)} className="text-indigo-400 hover:text-indigo-300 p-1.5 rounded-lg hover:bg-indigo-500/10">
                           <Pencil className="w-4 h-4" />
@@ -792,7 +779,8 @@ export default function Organization() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                   {departments.length === 0 && (
                     <tr>
                       <td colSpan="5" className="px-4 py-8 text-center text-muted-foreground">
@@ -831,21 +819,25 @@ export default function Organization() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {teams.map((team) => (
+                  {teams.map((team) => {
+                    const teamMembersCount = employees.filter(e => String(e.teamId) === String(team.id)).length;
+                    const deptName = departments.find(d => String(d.id) === String(team.departmentId))?.name || team.department?.name || '—';
+                    
+                    return (
                     <tr key={team.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                            <Briefcase className="w-4 h-4 text-cyan-400" />
+                          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 border border-cyan-500/20">
+                            <Network className="w-4 h-4 text-cyan-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="font-medium text-foreground">{team.name}</div>
                             {team.description && <div className="text-xs text-muted-foreground">{team.description}</div>}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{team.department?.name || '—'}</td>
-                      <td className="px-4 py-3 text-foreground">{team.stats?.activeEmployees || 0}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{deptName}</td>
+                      <td className="px-4 py-3 text-foreground">{teamMembersCount}</td>
                       <td className="px-4 py-3 text-foreground">{team.lead?.name || '—'}</td>
                       <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
                         <button onClick={() => handleEdit(team)} className="text-indigo-400 hover:text-indigo-300 p-1.5 rounded-lg hover:bg-indigo-500/10">
@@ -856,7 +848,8 @@ export default function Organization() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                   {teams.length === 0 && (
                     <tr>
                       <td colSpan="5" className="px-4 py-8 text-center text-muted-foreground">

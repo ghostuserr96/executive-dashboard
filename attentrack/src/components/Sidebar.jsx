@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, CalendarClock, Wallet, PlaneTakeoff,
   Award, Briefcase, GraduationCap, ListChecks,
   ChartLine, Bot, Megaphone, FileText,
-  Building2, MessageSquare, Settings, X,
+  Component, MessageSquare, Settings, X,
   Bell, UserCheck
 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
@@ -229,7 +229,7 @@ function SidebarContent({ onItemClick }) {
                   <NavLink to="/organization" onClick={onItemClick} className={({ isActive }) => `group flex items-center gap-2.5 rounded-full px-2.5 py-2 text-sm transition-all font-medium ${isActive ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'}`}>
                     {({ isActive }) => (
   <>
-    <Building2 className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
+    <Component className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
     <span className="flex-1 truncate">Organization</span>
   </>
 )}

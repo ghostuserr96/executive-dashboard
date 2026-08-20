@@ -101,7 +101,7 @@ export default function Payroll() {
       return {
         rawId: emp.id,
         name: emp.name || 'Employee',
-        id: emp.employeeId || `EMP-100${emp.id || index + 1}`,
+        id: emp.employeeId || '',
         role: emp.role || dept,
         rawBase: baseMonthly,
         rawAllowances: allowance,
@@ -458,7 +458,7 @@ export default function Payroll() {
                         )}
                         <div>
                           <div className="font-medium text-foreground">{userItem.name}</div>
-                          <div className="text-xs text-muted-foreground">{userItem.id}</div>
+                          {userItem.id && <div className="text-xs text-muted-foreground">{userItem.id}</div>}
                         </div>
                       </div>
                     </td>

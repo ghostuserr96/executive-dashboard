@@ -15,6 +15,7 @@ import {
 import { useDataContext } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { announcementService } from '../services/announcementService';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 const formatTimeAgo = (isoString) => {
   if (!isoString) return '';
@@ -259,18 +260,18 @@ const PostAnnouncementModal = ({ isOpen, onClose, onPost }) => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-foreground mb-1.5">Category</label>
-              <select
+              <CustomSelect
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-muted/60 border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option>Company</option>
-                <option>Policy</option>
-                <option>Events</option>
-                <option>Product</option>
-                <option>People Ops</option>
-                <option>Benefits</option>
-              </select>
+                onChange={(val) => setCategory(val)}
+                options={[
+                  { label: 'Company', value: 'Company' },
+                  { label: 'Policy', value: 'Policy' },
+                  { label: 'Events', value: 'Events' },
+                  { label: 'Product', value: 'Product' },
+                  { label: 'People Ops', value: 'People Ops' },
+                  { label: 'Benefits', value: 'Benefits' }
+                ]}
+              />
             </div>
             <div className="flex items-end">
               <label className="flex items-center gap-2 px-3.5 py-2.5 bg-muted/40 border border-border rounded-xl cursor-pointer w-full">

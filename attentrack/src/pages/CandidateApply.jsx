@@ -28,6 +28,7 @@ import {
   Link
 } from 'lucide-react';
 import { recruitmentService } from '../services/recruitmentService';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 // Custom Brand SVGs
 const GithubIcon = (props) => (
@@ -690,17 +691,18 @@ export default function CandidateApply() {
                         <label className={darkMode ? 'block text-xs font-black text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5' : 'block text-xs font-black text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5'}>
                           <GraduationCap className="w-3.5 h-3.5 text-purple-500" /> Qualification <span className="text-rose-500">*</span>
                         </label>
-                        <select
+                        <CustomSelect
                           value={formData.highestQualification}
-                          onChange={(e) => setFormData({ ...formData, highestQualification: e.target.value })}
-                          className={darkMode ? 'w-full px-4 py-3.5 rounded-2xl text-sm border bg-[#0d1020] border-purple-800/30 text-slate-100 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/25 transition-all font-semibold cursor-pointer shadow-inner' : 'w-full px-4 py-3.5 rounded-2xl text-sm border bg-slate-50 border-slate-300 text-slate-900 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all font-semibold cursor-pointer'}
-                        >
-                          <option value="High School">High School (12th / SSC)</option>
-                          <option value="Diploma">Diploma</option>
-                          <option value="Bachelor Degree">Bachelor's Degree (B.Tech / B.E / B.Sc / BCA)</option>
-                          <option value="Master Degree">Master's Degree (M.Tech / M.Sc / MCA / MBA)</option>
-                          <option value="Doctorate / PhD">Doctorate / PhD</option>
-                        </select>
+                          onChange={(val) => setFormData({ ...formData, highestQualification: val })}
+                          className="h-[52px] rounded-2xl"
+                          options={[
+                            { label: 'High School (12th / SSC)', value: 'High School' },
+                            { label: 'Diploma', value: 'Diploma' },
+                            { label: 'Bachelor\'s Degree (B.Tech / B.E / B.Sc / BCA)', value: 'Bachelor Degree' },
+                            { label: 'Master\'s Degree (M.Tech / M.Sc / MCA / MBA)', value: 'Master Degree' },
+                            { label: 'Doctorate / PhD', value: 'Doctorate / PhD' }
+                          ]}
+                        />
                       </div>
 
                       {/* TOTAL EXPERIENCE */}

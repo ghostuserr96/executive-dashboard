@@ -992,12 +992,14 @@ export default function Attendance() {
                   {capturedSelfie ? (
                     <div className="w-full flex flex-col items-center space-y-4 animate-in zoom-in-95">
                       {/* Selfie Photo Card */}
-                      <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-primary/40 shadow-lg bg-card">
+                      <div className="relative w-44 h-44 rounded-2xl overflow-hidden border-2 border-primary/40 shadow-lg bg-background isolate transform-gpu">
                         <img src={capturedSelfie} alt="Selfie Photo" className="w-full h-full object-cover" />
                         {isSelfieMatching && (
-                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center">
-                            <RefreshCw className="w-7 h-7 text-primary animate-spin" />
-                            <span className="text-xs font-medium text-foreground mt-2">Verifying photo...</span>
+                          <div className="absolute inset-0 bg-background/60 backdrop-blur-md flex flex-col items-center justify-center z-10">
+                            <div className="relative flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin shadow-glow"></div>
+                            </div>
+                            <span className="text-xs font-semibold text-foreground mt-3 tracking-wide animate-pulse">Verifying Face...</span>
                           </div>
                         )}
                       </div>

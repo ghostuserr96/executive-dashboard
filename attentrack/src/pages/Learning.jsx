@@ -3,10 +3,11 @@ import {
   BookOpen, PlayCircle, Award, Clock, Play, Plus, Trash2,
   RefreshCw, X, Edit3, CheckCircle2, Users, ChevronRight,
   Loader2, ArrowLeft, Link2, FileText, Tv2, MonitorPlay,
-  ExternalLink, Check, AlertCircle
+  ExternalLink, Check, AlertCircle, ShieldAlert, ArrowRight
 } from 'lucide-react';
 import { learningService } from '../services/learningService';
 import { useAuth } from '../context/AuthContext';
+import { CustomSelect } from '../components/common/CustomSelect';
 
 /* ─── Constants ─── */
 const CATEGORY_OPTIONS = ['Engineering','Leadership','Product','Design','Compliance','HR','Finance','Managers','General'];
@@ -394,9 +395,7 @@ export default function Learning() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Category</label>
-                    <select value={courseForm.category} onChange={e=>setCourseForm({...courseForm,category:e.target.value})} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm focus:border-primary focus:outline-none h-[38px]">
-                      {CATEGORY_OPTIONS.map(c=><option key={c}>{c}</option>)}
-                    </select>
+                    <CustomSelect value={courseForm.category} onChange={val=>setCourseForm({...courseForm,category:val})} options={CATEGORY_OPTIONS.map(c=>({label:c,value:c}))} />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Duration</label>
@@ -406,16 +405,11 @@ export default function Learning() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Badge</label>
-                    <select value={courseForm.badge||''} onChange={e=>setCourseForm({...courseForm,badge:e.target.value||null})} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm h-[38px]">
-                      <option value="">None</option>
-                      {['Featured','New','Mandatory'].map(b=><option key={b}>{b}</option>)}
-                    </select>
+                    <CustomSelect value={courseForm.badge||''} onChange={val=>setCourseForm({...courseForm,badge:val||null})} options={[{label:'None',value:''}, ...['Featured','New','Mandatory'].map(b=>({label:b,value:b}))]} />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Status</label>
-                    <select value={courseForm.status} onChange={e=>setCourseForm({...courseForm,status:e.target.value})} className="w-full px-3 py-2 bg-background border border-border rounded-xl text-foreground text-sm h-[38px]">
-                      <option>Active</option><option>Draft</option><option>Archived</option>
-                    </select>
+                    <CustomSelect value={courseForm.status} onChange={val=>setCourseForm({...courseForm,status:val})} options={[{label:'Active',value:'Active'},{label:'Draft',value:'Draft'},{label:'Archived',value:'Archived'}]} />
                   </div>
                 </div>
                 <div>
