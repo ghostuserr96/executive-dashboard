@@ -736,9 +736,9 @@ export default function Dashboard() {
                       <img src={person.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=3b82f6&color=fff&bold=true`} alt="" className="w-10 h-10 rounded-full object-cover border border-border shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-semibold text-foreground truncate">{person.name}</div>
-                        <div className="text-[11px] text-primary font-medium">{person.type}</div>
+                        <div className="text-[11px] text-primary font-medium truncate">{person.type}</div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md shrink-0">{person.date}</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">{person.date}</span>
                     </div>
                   ));
                 }
@@ -748,9 +748,9 @@ export default function Dashboard() {
                       <img src={emp.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff&bold=true`} alt="" className="w-10 h-10 rounded-full object-cover border border-border shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-semibold text-foreground truncate">{emp.name}</div>
-                        <div className="text-[11px] text-primary font-medium">{emp.role || 'Teammate'}</div>
+                        <div className="text-[11px] text-primary font-medium truncate">{emp.role || 'Teammate'}</div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md shrink-0">{emp.department}</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">{emp.department}</span>
                     </div>
                   ));
                 }

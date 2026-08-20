@@ -253,7 +253,7 @@ export default function Header({ onToggleMobileMenu }) {
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-border bg-card shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-[-10px] sm:right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 rounded-2xl border border-border bg-card shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">Notifications</span>

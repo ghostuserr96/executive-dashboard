@@ -925,7 +925,7 @@ export default function Attendance() {
                     </div>
 
                     <div className="w-28 flex justify-end">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${logUser.isClockedOut
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${logUser.isClockedOut
                           ? 'border-rose-500/30 bg-rose-500/10 text-rose-500'
                           : logUser.status === 'On time' || logUser.status === 'On Time'
                             ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500'

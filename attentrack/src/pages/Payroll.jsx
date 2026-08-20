@@ -468,7 +468,7 @@ export default function Payroll() {
                     <td className="px-6 py-4 font-medium text-red-600 dark:text-red-500">{userItem.deductions}</td>
                     <td className="px-6 py-4 font-semibold">{userItem.net}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${
                         userItem.status === 'Paid'
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                           : userItem.status === 'Approved'

@@ -403,7 +403,7 @@ export default function Recruitment() {
               return (
                 <div key={stage} className="min-w-[260px] flex-1 bg-muted/20 border border-border/60 rounded-2xl p-4 flex flex-col space-y-3">
                   <div className="flex items-center justify-between font-semibold text-sm">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border whitespace-nowrap ${
                       stage === 'Shortlist' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
                       stage === 'Interview' ? 'bg-purple-500/10 text-purple-600 border-purple-500/20' :
                       stage === 'Reject' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :

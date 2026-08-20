@@ -567,7 +567,7 @@ export default function CandidateApply() {
 
               {/* STEP TABS NAVIGATION (WIZARD MODE) */}
               {viewMode === 'wizard' && (
-                <div className={darkMode ? 'rounded-2xl p-2 flex items-center justify-between text-xs font-bold overflow-x-auto border bg-[#141928] border-purple-700/25 shadow-lg' : 'rounded-2xl p-2 flex items-center justify-between text-xs font-bold overflow-x-auto border bg-background border-slate-200 shadow-xs'}>
+                <div className={darkMode ? 'rounded-2xl p-2 flex flex-nowrap items-center justify-start sm:justify-between text-xs font-bold overflow-x-auto border bg-[#141928] border-purple-700/25 shadow-lg gap-2' : 'rounded-2xl p-2 flex flex-nowrap items-center justify-start sm:justify-between text-xs font-bold overflow-x-auto border bg-background border-slate-200 shadow-xs gap-2'}>
                   {[
                     { num: 1, label: '1. Contact', icon: <User className="w-3.5 h-3.5" /> },
                     { num: 2, label: '2. Skills', icon: <Award className="w-3.5 h-3.5" /> },
@@ -582,7 +582,7 @@ export default function CandidateApply() {
                           setCurrentStep(st.num);
                         }
                       }}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 rounded-xl transition-all cursor-pointer min-w-[100px] ${
+                      className={`flex-1 shrink-0 whitespace-nowrap flex items-center justify-center gap-2 py-3 px-3 rounded-xl transition-all cursor-pointer min-w-[100px] sm:min-w-[120px] ${
                         currentStep === st.num
                           ? 'bg-purple-600 text-foreground shadow-md font-black'
                           : currentStep > st.num
