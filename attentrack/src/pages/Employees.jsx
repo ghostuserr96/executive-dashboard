@@ -167,7 +167,12 @@ export default function Employees() {
       workLifeBalance: 3,
       performanceRating: 3,
       overTime: 'No',
-      businessTravel: 'Travel_Rarely'
+      businessTravel: 'Travel_Rarely',
+      totalWorkingYears: 5,
+      yearsAtCompany: 3,
+      yearsInCurrentRole: 2,
+      yearsSinceLastPromotion: 1,
+      yearsWithCurrManager: 2
     });
     setUploadError('');
     setIsDemographicsOpen(false);
@@ -199,29 +204,34 @@ export default function Employees() {
       dob: emp.dob || '',
       joinDate: emp.joinDate || '',
       status: emp.status || 'Active',
-      age: emp.age || '',
-      distanceFromHome: emp.distanceFromHome || '',
-      dailyRate: emp.dailyRate || '',
-      hourlyRate: emp.hourlyRate || '',
-      monthlyIncome: emp.monthlyIncome || '',
-      monthlyRate: emp.monthlyRate || '',
-      percentSalaryHike: emp.percentSalaryHike || '',
-      stockOptionLevel: emp.stockOptionLevel !== undefined ? emp.stockOptionLevel : 0,
-      education: emp.education || 3,
+      age: emp.age !== undefined && emp.age !== '' ? Number(emp.age) : 35,
+      distanceFromHome: emp.distanceFromHome !== undefined && emp.distanceFromHome !== '' ? Number(emp.distanceFromHome) : 5,
+      dailyRate: emp.dailyRate !== undefined && emp.dailyRate !== '' ? Number(emp.dailyRate) : 800,
+      hourlyRate: emp.hourlyRate !== undefined && emp.hourlyRate !== '' ? Number(emp.hourlyRate) : 65,
+      monthlyIncome: emp.monthlyIncome !== undefined && emp.monthlyIncome !== '' ? Number(emp.monthlyIncome) : (emp.baseSalary || 5000),
+      monthlyRate: emp.monthlyRate !== undefined && emp.monthlyRate !== '' ? Number(emp.monthlyRate) : 15000,
+      percentSalaryHike: emp.percentSalaryHike !== undefined && emp.percentSalaryHike !== '' ? Number(emp.percentSalaryHike) : 15,
+      stockOptionLevel: emp.stockOptionLevel !== undefined ? Number(emp.stockOptionLevel) : 0,
+      education: emp.education ? Number(emp.education) : 3,
       educationField: emp.educationField || 'Life Sciences',
       maritalStatus: emp.maritalStatus || 'Single',
       gender: emp.gender || 'Male',
-      jobLevel: emp.jobLevel || 1,
-      numCompaniesWorked: emp.numCompaniesWorked || 1,
-      trainingTimesLastYear: emp.trainingTimesLastYear || 2,
-      environmentSatisfaction: emp.environmentSatisfaction || 3,
-      relationshipSatisfaction: emp.relationshipSatisfaction || 3,
-      jobSatisfaction: emp.jobSatisfaction || 3,
-      jobInvolvement: emp.jobInvolvement || 3,
-      workLifeBalance: emp.workLifeBalance || 3,
-      performanceRating: emp.performanceRating || 3,
+      jobLevel: emp.jobLevel ? Number(emp.jobLevel) : 1,
+      numCompaniesWorked: emp.numCompaniesWorked !== undefined ? Number(emp.numCompaniesWorked) : 1,
+      trainingTimesLastYear: emp.trainingTimesLastYear !== undefined ? Number(emp.trainingTimesLastYear) : 2,
+      environmentSatisfaction: emp.environmentSatisfaction !== undefined ? Number(emp.environmentSatisfaction) : 3,
+      relationshipSatisfaction: emp.relationshipSatisfaction !== undefined ? Number(emp.relationshipSatisfaction) : 3,
+      jobSatisfaction: emp.jobSatisfaction !== undefined ? Number(emp.jobSatisfaction) : 3,
+      jobInvolvement: emp.jobInvolvement !== undefined ? Number(emp.jobInvolvement) : 3,
+      workLifeBalance: emp.workLifeBalance !== undefined ? Number(emp.workLifeBalance) : 3,
+      performanceRating: emp.performanceRating !== undefined ? Number(emp.performanceRating) : 3,
       overTime: emp.overTime || 'No',
-      businessTravel: emp.businessTravel || 'Travel_Rarely'
+      businessTravel: emp.businessTravel || 'Travel_Rarely',
+      totalWorkingYears: emp.totalWorkingYears !== undefined ? Number(emp.totalWorkingYears) : 10,
+      yearsAtCompany: emp.yearsAtCompany !== undefined ? Number(emp.yearsAtCompany) : 5,
+      yearsInCurrentRole: emp.yearsInCurrentRole !== undefined ? Number(emp.yearsInCurrentRole) : 3,
+      yearsSinceLastPromotion: emp.yearsSinceLastPromotion !== undefined ? Number(emp.yearsSinceLastPromotion) : 1,
+      yearsWithCurrManager: emp.yearsWithCurrManager !== undefined ? Number(emp.yearsWithCurrManager) : 3
     });
     setUploadError('');
     setIsDemographicsOpen(false);
@@ -855,6 +865,26 @@ export default function Employees() {
                         <div className="col-span-2">
                           <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Business Travel</label>
                           <CustomSelect value={formData.businessTravel} onChange={(val) => setFormData({ ...formData, businessTravel: val })} options={[{label: 'Non-Travel', value: 'Non-Travel'},{label: 'Travel Rarely', value: 'Travel_Rarely'},{label: 'Travel Frequently', value: 'Travel_Frequently'}]} />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Total Working Years</label>
+                          <input type="number" value={formData.totalWorkingYears} onChange={(e) => setFormData({ ...formData, totalWorkingYears: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Years At Company</label>
+                          <input type="number" value={formData.yearsAtCompany} onChange={(e) => setFormData({ ...formData, yearsAtCompany: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Years In Current Role</label>
+                          <input type="number" value={formData.yearsInCurrentRole} onChange={(e) => setFormData({ ...formData, yearsInCurrentRole: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Years Since Last Promotion</label>
+                          <input type="number" value={formData.yearsSinceLastPromotion} onChange={(e) => setFormData({ ...formData, yearsSinceLastPromotion: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[10px] font-semibold text-foreground mb-1 uppercase tracking-wider">Years With Current Manager</label>
+                          <input type="number" value={formData.yearsWithCurrManager} onChange={(e) => setFormData({ ...formData, yearsWithCurrManager: Number(e.target.value) })} className="w-full px-2 py-1.5 bg-card border border-border rounded-lg text-foreground text-xs focus:outline-none" />
                         </div>
                       </div>
                     </div>

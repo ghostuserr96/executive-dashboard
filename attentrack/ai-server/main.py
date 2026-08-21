@@ -449,6 +449,7 @@ Resumes:
     try:
         response = client.chat.completions.create(
             model=LLM_MODEL,
+            temperature=0.0,
             messages=[{"role": "user", "content": prompt}]
         )
         content = response.choices[0].message.content
@@ -536,6 +537,7 @@ Candidates:
     try:
         response = client.chat.completions.create(
             model=LLM_MODEL,
+            temperature=0.0,
             messages=[{"role": "user", "content": prompt}]
         )
         content = response.choices[0].message.content
@@ -568,32 +570,32 @@ Candidates:
             raw_target = data_item.get("matched_target_keywords") or heuristic["matched_target_keywords"]
 
             ranked_candidates.append({
-                "id": candidate.id or str(uuid.uuid4()),
+                "id": candidate.id or f"cand_{idx}",
                 "name": candidate.name,
                 "years_experience": candidate.years_experience,
-                "skill_score": safe_float(data_item.get("skill_score", heuristic["skill_score"])),
                 "total_score": safe_float(data_item.get("total_score", heuristic["total_score"])),
+                "skill_score": safe_float(data_item.get("skill_score", heuristic["skill_score"])),
                 "must_have_match_rate": safe_float(data_item.get("must_have_match_rate", heuristic["must_have_match_rate"])),
                 "nice_to_have_match_rate": safe_float(data_item.get("nice_to_have_match_rate", heuristic["nice_to_have_match_rate"])),
-                "experience_score": safe_float(data_item.get("experience_score", heuristic["experience_score"])),
                 "target_keyword_match_rate": safe_float(data_item.get("target_keyword_match_rate", heuristic["target_keyword_match_rate"])),
-                "hard_constraint_passed": bool(data_item.get("hard_constraint_passed", True)),
-                "matched_skills": unique_list(raw_matched),
-                "missing_skills": unique_list(raw_missing),
-                "matched_target_keywords": unique_list(raw_target),
+                "experience_score": safe_float(data_item.get("experience_score", heuristic["experience_score"])),
+                "hard_constraint_passed": bool(data_item.get("hard_constraint_passed", heuristic["hard_constraint_passed"])),
+                "matched_skills": raw_matched,
+                "missing_skills": raw_missing,
+                "matched_target_keywords": raw_target,
                 "evidence": data_item.get("evidence") or heuristic["evidence"]
             })
     except Exception as e:
-        print(f"Failed to analyze: {e}")
-        # Fall back to heuristic scoring for all candidates rather than crashing
-        for candidate in req.candidates:
+        print(f"LLM analysis failed, falling back to heuristics: {e}")
+        ranked_candidates = []
+        for idx, candidate in enumerate(req.candidates):
             heuristic = compute_heuristic_scores(candidate, req)
             ranked_candidates.append({
-                "id": candidate.id or str(uuid.uuid4()),
+                "id": candidate.id or f"cand_{idx}",
                 "name": candidate.name,
                 "years_experience": candidate.years_experience,
-                "skill_score": heuristic["skill_score"],
                 "total_score": heuristic["total_score"],
+                "skill_score": heuristic["skill_score"],
                 "must_have_match_rate": heuristic["must_have_match_rate"],
                 "nice_to_have_match_rate": heuristic["nice_to_have_match_rate"],
                 "experience_score": heuristic["experience_score"],
@@ -605,7 +607,7 @@ Candidates:
                 "evidence": heuristic["evidence"]
             })
         
-    ranked_candidates.sort(key=lambda x: x["total_score"], reverse=True)
+    ranked_candidates.sort(key=lambda x: (-x["total_score"], str(x["name"]).lower()))
     return {
         "job_title": req.job_title,
         "role_family": req.role_family,
@@ -660,6 +662,7 @@ Resumes:
     try:
         response = client.chat.completions.create(
             model=LLM_MODEL,
+            temperature=0.0,
             messages=[{"role": "user", "content": meta_prompt}]
         )
         content = response.choices[0].message.content

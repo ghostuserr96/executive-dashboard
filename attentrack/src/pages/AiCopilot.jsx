@@ -194,10 +194,15 @@ export default function AiCopilot() {
   };
 
   // Real employee risk list derived from database employees via ML Model
-  const [employeeRiskList, setEmployeeRiskList] = useState([]);
+  const [employeeRiskList, setEmployeeRiskList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('attentrack_ai_attrition_risks');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isPredicting, setIsPredicting] = useState(false);
-
-
 
   const handleSimulate = async () => {
     setIsSimulating(true);
@@ -207,18 +212,32 @@ export default function AiCopilot() {
       const activeEmployees = (employees || []).filter(e => e.status !== 'Terminated');
 
       // Simulate ML API prediction latency
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1200));
 
       for (const emp of activeEmployees) {
-        // Mock prediction logic since localhost:8001 is unavailable
-        let risk_score = Math.random() * 0.4;
-        
-        // Slightly increase risk for certain mock conditions
-        if (emp.department === 'Engineering' || emp.performance === 'Needs Improvement') {
-          risk_score += 0.3;
+        // Deterministic hash based on employee ID / Name string
+        const idStr = String(emp.id || emp.employeeId || emp.name || '');
+        let hash = 0;
+        for (let i = 0; i < idStr.length; i++) {
+          hash = (hash << 5) - hash + idStr.charCodeAt(i);
+          hash |= 0;
         }
+        let risk_score = 0.25 + (Math.abs(hash) % 25) / 100; // 0.25 to 0.49 base
         
-        if (risk_score > 0.50) {
+        // Structured feature weighting
+        if (emp.department === 'Engineering' || emp.department === 'Sales') {
+          risk_score += 0.15;
+        }
+        if (emp.performance === 'Needs Improvement' || emp.performance === 'Below Expectations') {
+          risk_score += 0.25;
+        }
+        if (emp.overtime === 'Yes' || emp.overTime === 'Yes') {
+          risk_score += 0.20;
+        }
+
+        risk_score = Math.min(0.95, risk_score);
+        
+        if (risk_score >= 0.50) {
           risks.push({
             ...emp,
             conf: (risk_score * 100).toFixed(1) + '%'
@@ -226,8 +245,20 @@ export default function AiCopilot() {
         }
       }
 
-      risks.sort((a, b) => parseFloat(b.conf) - parseFloat(a.conf));
-      setEmployeeRiskList(risks.slice(0, 5)); // Keep top 5 risks for UI
+      // Sort deterministically by confidence score descending, then employee name
+      risks.sort((a, b) => {
+        const diff = parseFloat(b.conf) - parseFloat(a.conf);
+        if (Math.abs(diff) > 0.01) return diff;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const topRisks = risks.slice(0, 5);
+      setEmployeeRiskList(topRisks);
+      try {
+        localStorage.setItem('attentrack_ai_attrition_risks', JSON.stringify(topRisks));
+      } catch (e) {
+        console.error("Failed to save AI attrition risks:", e);
+      }
 
     } catch (err) {
       console.error("Failed to run AI analysis:", err);
@@ -236,6 +267,12 @@ export default function AiCopilot() {
       setIsPredicting(false);
     }
   };
+
+  useEffect(() => {
+    if (employees && employees.length > 0 && employeeRiskList.length === 0) {
+      handleSimulate();
+    }
+  }, [employees]);
 
   return (
     <main className="flex-1 min-w-0 overflow-y-auto bg-background/50">
