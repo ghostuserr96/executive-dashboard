@@ -27,6 +27,60 @@ const PRESENCE_PATH = 'presence';
 const TYPING_PATH = 'typing';
 
 export const chatService = {
+  subscribeAllUsers: (callback) => {
+    const usersRef = ref(rtdb, 'users');
+    const empRef = ref(rtdb, 'employees');
+
+    let usersData = {};
+    let empData = {};
+
+    const emit = () => {
+      const map = {};
+      const registerUser = (usr) => {
+        if (!usr) return;
+        const photo = usr.avatar || usr.photoURL || null;
+        const entry = { ...usr, avatar: photo };
+        
+        if (usr.id) map[String(usr.id).toLowerCase()] = entry;
+        if (usr.email) map[String(usr.email).trim().toLowerCase()] = entry;
+        if (usr.name) {
+          const nameClean = String(usr.name).trim().toLowerCase();
+          map[nameClean] = entry;
+          // Also map first name (e.g. "luffy" -> entry)
+          const firstName = nameClean.split(' ')[0];
+          if (firstName && !map[firstName]) map[firstName] = entry;
+        }
+      };
+
+      if (empData) {
+        const empList = typeof empData === 'object' ? Object.values(empData) : [];
+        empList.forEach(registerUser);
+      }
+
+      if (usersData) {
+        const usrList = typeof usersData === 'object' ? Object.values(usersData) : [];
+        usrList.forEach(registerUser);
+      }
+
+      callback(map);
+    };
+
+    const unsubUsers = onValue(usersRef, (snapshot) => {
+      usersData = snapshot.exists() ? snapshot.val() : {};
+      emit();
+    });
+
+    const unsubEmp = onValue(empRef, (snapshot) => {
+      empData = snapshot.exists() ? snapshot.val() : {};
+      emit();
+    });
+
+    return () => {
+      unsubUsers();
+      unsubEmp();
+    };
+  },
+
   subscribeChannels: (callback, { type, limit: queryLimit } = {}) => {
     let channelsRef = ref(rtdb, CHANNELS_PATH);
     let q = channelsRef;

@@ -234,6 +234,7 @@ export default function Messaging() {
 
   const { user } = useAuth();
   const { employees } = useDataContext();
+  const [usersMap, setUsersMap] = useState({});
   const [isNewChatOpen, setIsNewChatOpen] = useState(false); // 'channel' | 'dm' | false
   const [newChatName, setNewChatName] = useState('');
   const [newChatSearch, setNewChatSearch] = useState('');
@@ -243,6 +244,39 @@ export default function Messaging() {
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const fileInputRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const unsub = chatService.subscribeAllUsers((map) => {
+      setUsersMap(map);
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
+
+  const getBackendPhoto = (identifier) => {
+    if (!identifier) return null;
+    const str = String(identifier).trim().toLowerCase();
+    
+    if (usersMap[str]?.avatar) return usersMap[str].avatar;
+    
+    const firstName = str.split(' ')[0];
+    if (usersMap[firstName]?.avatar) return usersMap[firstName].avatar;
+
+    if (employees && employees.length > 0) {
+      const emp = employees.find(e => {
+        if (!e) return false;
+        const eId = String(e.id || '').toLowerCase();
+        const eEmail = String(e.email || '').trim().toLowerCase();
+        const eName = String(e.name || '').trim().toLowerCase();
+        if (eId === str || eEmail === str || eName === str || eName.includes(str) || str.includes(eName)) return true;
+        return false;
+      });
+      if (emp?.avatar) return emp.avatar;
+    }
+
+    return null;
+  };
 
   useEffect(() => {
     if (activeChannel?.id) {
@@ -403,37 +437,11 @@ export default function Messaging() {
                 ) : (
                   displayDMs.map((dm) => {
                     const currentIdStr = String(user?.id || user?.email || '').toLowerCase();
-                    const currentNameStr = String(user?.name || '').trim().toLowerCase();
                     const displayName = getDisplayName(dm, user);
-                    const cleanDisplayName = String(displayName || '').trim().toLowerCase();
                     const membersList = Array.isArray(dm.members) ? dm.members : (Array.isArray(dm.participants) ? dm.participants : []);
                     const otherUserId = membersList.find((p) => String(p).toLowerCase() !== currentIdStr);
-                    const otherStr = String(otherUserId || '').trim().toLowerCase();
 
-                    let avatarToUse = dm.avatar || dm.photoURL || dm.otherUserAvatar || null;
-
-                    if (!avatarToUse && employees && employees.length > 0) {
-                      const matchedEmp = employees.find(e => {
-                        if (!e) return false;
-                        const eId = String(e.id || '').toLowerCase();
-                        const eEmail = String(e.email || '').trim().toLowerCase();
-                        const eName = String(e.name || '').trim().toLowerCase();
-
-                        // EXCLUDE current logged-in user
-                        if (eId === currentIdStr || eEmail === currentIdStr || (currentNameStr && eName === currentNameStr)) {
-                          return false;
-                        }
-
-                        if (otherStr && (eId === otherStr || eEmail === otherStr)) return true;
-                        if (cleanDisplayName && (eName === cleanDisplayName || eName.includes(cleanDisplayName) || cleanDisplayName.includes(eName))) return true;
-
-                        return false;
-                      });
-
-                      if (matchedEmp?.avatar) {
-                        avatarToUse = matchedEmp.avatar;
-                      }
-                    }
+                    const avatarToUse = dm.avatar || dm.photoURL || dm.otherUserAvatar || getBackendPhoto(otherUserId) || getBackendPhoto(displayName);
 
                     return (
                       <DMItem
@@ -495,25 +503,9 @@ export default function Messaging() {
                   let avatarToUse = null;
 
                   if (isCurrentUser) {
-                    avatarToUse = user?.avatar || user?.photoURL || null;
+                    avatarToUse = user?.avatar || user?.photoURL || getBackendPhoto(user?.id) || getBackendPhoto(user?.name);
                   } else {
-                    const senderEmp = employees?.find(e => {
-                      if (!e) return false;
-                      const eId = String(e.id || '').toLowerCase();
-                      const eEmail = String(e.email || '').trim().toLowerCase();
-                      const eName = String(e.name || '').trim().toLowerCase();
-
-                      if (eId === currentIdStr || eEmail === currentIdStr || (currentNameStr && eName === currentNameStr)) return false;
-
-                      if (msgSenderIdClean && (eId === msgSenderIdClean || eEmail === msgSenderIdClean)) return true;
-                      if (msgSenderNameClean && (eName === msgSenderNameClean || eName.includes(msgSenderNameClean) || msgSenderNameClean.includes(eName))) return true;
-
-                      return false;
-                    });
-
-                    if (senderEmp?.avatar) {
-                      avatarToUse = senderEmp.avatar;
-                    }
+                    avatarToUse = getBackendPhoto(msg.senderId) || getBackendPhoto(msg.senderName);
                   }
 
                   return (
