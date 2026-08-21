@@ -141,7 +141,7 @@ function SidebarContent({ onItemClick }) {
                     {({ isActive }) => (
   <>
     <UserCheck className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-    <span className="flex-1 truncate">AI Resume Screening</span>
+    <span className="flex-1 truncate">Candidate Screening</span>
   </>
 )}
                   </NavLink>

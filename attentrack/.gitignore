@@ -35,3 +35,14 @@ img/
 # Secrets
 server/src/config/google-tokens.json
 server/src/config/service-account.json
+
+# Python Bytecode & Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+ai-server/__pycache__/
+ai-server/attrition_model.pkl
+ai-server/.venv/
+.venv/

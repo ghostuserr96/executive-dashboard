@@ -49,11 +49,22 @@ export default function AiResumeScreening() {
   
   // Results State
   const [statusBanner, setStatusBanner] = useState({ type: '', message: '' });
-  const [resultSubtitle, setResultSubtitle] = useState("Run an analysis to view ranked candidates.");
+  const [resultSubtitle, setResultSubtitle] = useState("Awaiting Candidate Evaluation");
   const [rankedCandidates, setRankedCandidates] = useState([]);
   const [compareAIdx, setCompareAIdx] = useState(0);
   const [compareBIdx, setCompareBIdx] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shortlistedIds, setShortlistedIds] = useState(new Set());
+  const [viewMode, setViewMode] = useState('cards');
+
+  const toggleShortlist = (id) => {
+    setShortlistedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const fileInputRef = useRef(null);
 
@@ -148,7 +159,52 @@ export default function AiResumeScreening() {
   };
 
   const splitCommaValues = (value) => {
-    return value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+    if (!value) return [];
+    let text = Array.isArray(value) ? value.join('\n') : String(value);
+    
+    // Insert spacing for concatenated words like Node.jsLangGraph -> Node.js LangGraph
+    text = text.replace(/([a-z0-9\.\/])([A-Z])/g, '$1 $2');
+
+    const lines = text.split(/[\n;\r]+/);
+    
+    const stopWords = new Set([
+      '5+', '3+', '1+', '2+', '4+', 'years', 'year', 'yrs', 'yr', 'with', 'or', 'and', 'experience',
+      'experienced', 'knowledge', 'familiarity', 'proficient', 'strong', 'exposure', 'bonus', 'plus',
+      'optional', 'preferred', 'required', 'must', 'have', 'of', 'in'
+    ]);
+
+    const extracted = [];
+    
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      
+      line = line.replace(/^[\d\s\-\.\•\*\>]+\+?/, '').trim();
+      const subItems = line.split(/[,/&|\u2022\u2023\u25b6]+|\bAND\b|\bOR\b/i);
+      
+      for (let item of subItems) {
+        let itemClean = item.trim();
+        if (!itemClean) continue;
+        
+        const words = itemClean.split(/\s+/);
+        if (words.length >= 2 && !itemClean.includes(',')) {
+          for (let w of words) {
+            let wClean = w.replace(/^[^\w\+\#\.]+|[^\w\+\#\.]+$/g, '').trim();
+            if (wClean && !stopWords.has(wClean.toLowerCase()) && wClean.length >= 2) {
+              extracted.push(wClean.toLowerCase());
+            }
+          }
+        } else {
+          itemClean = itemClean.replace(/\b(\d*\+?\s*years?|\d*\+?\s*yrs?|with|or|and|experience|experienced|knowledge|familiarity|proficient|strong|exposure|bonus:?|plus:?|optional:?|preferred:?|required:?|must have:?|of|in)\b/gi, '').trim();
+          itemClean = itemClean.replace(/^[^\w\+\#\.]+|[^\w\+\#\.]+$/g, '').trim();
+          if (itemClean && itemClean.length >= 2) {
+            extracted.push(itemClean.toLowerCase());
+          }
+        }
+      }
+    }
+
+    return Array.from(new Set(extracted));
   };
 
   const handleSubmit = async (e) => {
@@ -254,9 +310,9 @@ export default function AiResumeScreening() {
         
         <div>
           <div className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mb-2">Recruitment</div>
-          <h1 className="text-3xl font-bold tracking-tight text-card-foreground">AI Resume Screening</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-card-foreground">Candidate Screening & Evaluation</h1>
           <p className="text-sm text-muted-foreground mt-2 font-medium">
-            Screen tech candidates with explainable AI ranking and semantic skill matching.
+            Automated candidate compatibility assessment and skill alignment report.
           </p>
         </div>
 
@@ -510,9 +566,30 @@ export default function AiResumeScreening() {
           </div>
 
           <div className="bg-card p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/60 min-h-[400px]">
-            <div className="flex items-center justify-between border-b border-border/60 pb-6 mb-8">
-              <h2 className="text-xl font-bold text-card-foreground">Leaderboard</h2>
-              <span className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest">{resultSubtitle}</span>
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border/60 pb-6 mb-8 gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-card-foreground tracking-tight">Candidate Ranking Report</h2>
+                <p className="text-xs text-muted-foreground font-medium mt-1">Objective suitability evaluation based on job specifications and skill alignment</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center bg-accent/60 p-1 rounded-xl border border-border/50">
+                  <button 
+                    type="button" 
+                    onClick={() => setViewMode('cards')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${viewMode === 'cards' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    Cards View
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    Table View
+                  </button>
+                </div>
+                <span className="text-xs font-bold text-muted-foreground/70 uppercase tracking-widest bg-accent px-3 py-1.5 rounded-xl border border-border/40 hidden md:inline-block">{resultSubtitle}</span>
+              </div>
             </div>
 
             {statusBanner.message && (
@@ -523,66 +600,208 @@ export default function AiResumeScreening() {
 
             {rankedCandidates.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-border rounded-3xl bg-background/50">
-                <p className="text-base font-bold text-card-foreground mb-1">No results yet</p>
-                <p className="text-sm text-muted-foreground font-medium">Use the form above to generate a shortlist.</p>
+                <p className="text-base font-bold text-card-foreground mb-1">No candidates analyzed yet</p>
+                <p className="text-sm text-muted-foreground font-medium">Configure job context and upload resumes above to generate ranking.</p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {rankedCandidates.map((candidate, index) => {
-                  const passed = candidate.hard_constraint_passed;
-                  return (
-                    <div key={index} className="bg-card border border-border rounded-3xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-                      <div className={`absolute top-0 left-0 w-1.5 h-full ${passed ? 'bg-indigo-500' : 'bg-orange-400'}`}></div>
-                      
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 ml-2 gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-card-foreground font-bold text-sm">
-                            {index + 1}
-                          </div>
-                          <h3 className="text-xl font-bold text-card-foreground">
-                            {candidate.name}
-                          </h3>
-                        </div>
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${passed ? 'bg-primary/10 text-primary border-primary/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}`}>
-                          {passed ? "Hard Constraint Passed" : "Hard Constraint Risk"}
-                        </span>
-                      </div>
-                      
-                      <div className="ml-10 mb-8 max-w-xl">
-                        {renderScoreBar("Total Score", candidate.total_score)}
-                        {renderScoreBar("Required Skill", candidate.skill_score)}
-                        {renderScoreBar("Must-Have", candidate.must_have_match_rate)}
-                        {renderScoreBar("Nice-To-Have", candidate.nice_to_have_match_rate)}
-                        {renderScoreBar("Target Match", candidate.target_keyword_match_rate)}
-                        {renderScoreBar("Experience", candidate.experience_score)}
-                      </div>
+              <div>
+                {/* Executive KPI Summary Bar */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-sm flex flex-col justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Screened Candidates</span>
+                    <span className="text-2xl font-black text-foreground mt-1">{rankedCandidates.length}</span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm flex flex-col justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Top Match Score</span>
+                    <span className="text-2xl font-black text-primary mt-1">
+                      {(rankedCandidates[0]?.total_score || 0).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 shadow-sm flex flex-col justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Strong Fits (≥75%)</span>
+                    <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                      {rankedCandidates.filter(c => (c.total_score || 0) >= 75).length}
+                    </span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 shadow-sm flex flex-col justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Avg Compatibility</span>
+                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
+                      {(rankedCandidates.reduce((a, b) => a + (b.total_score || 0), 0) / rankedCandidates.length).toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
 
-                      <div className="ml-10 grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-border/60 text-sm">
-                        <div>
-                          <strong className="block text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Matched Skills</strong>
-                          <div className="flex flex-wrap gap-2">
-                            {candidate.matched_skills?.length ? candidate.matched_skills.map((s, j) => <span key={j} className="px-3 py-1.5 bg-accent text-foreground/90 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-muted-foreground/70 italic">None</span>}
+                {viewMode === 'table' ? (
+                  <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-accent/50 border-b border-border text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                          <th className="p-4">Rank</th>
+                          <th className="p-4">Candidate Name</th>
+                          <th className="p-4">Experience</th>
+                          <th className="p-4">Match Score</th>
+                          <th className="p-4">Verified Core Skills</th>
+                          <th className="p-4">Skill Gaps / Missing</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/60">
+                        {rankedCandidates.map((candidate, index) => {
+                          const uniqueMatched = Array.from(new Set((candidate.matched_skills || []).map(s => String(s).trim().toUpperCase()))).filter(Boolean);
+                          const uniqueMissing = Array.from(new Set((candidate.missing_skills || []).map(s => String(s).trim().toUpperCase()))).filter(Boolean);
+                          const totalScore = Math.max(0, Math.min(100, candidate.total_score || 0));
+
+                          return (
+                            <tr key={index} className="hover:bg-accent/20 transition-colors font-medium">
+                              <td className="p-4">
+                                <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase ${index === 0 ? 'bg-primary text-primary-foreground' : 'bg-accent text-muted-foreground'}`}>
+                                  #{index + 1}
+                                </span>
+                              </td>
+                              <td className="p-4 font-bold text-sm text-card-foreground">
+                                {candidate.name}
+                              </td>
+                              <td className="p-4 text-muted-foreground">
+                                {candidate.years_experience ? `${candidate.years_experience} Yrs` : 'N/A'}
+                              </td>
+                              <td className="p-4">
+                                <span className={`px-3 py-1 rounded-xl font-bold ${totalScore >= 80 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : totalScore >= 65 ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'bg-slate-500/10 text-slate-700 dark:text-slate-300'}`}>
+                                  {totalScore.toFixed(1)}%
+                                </span>
+                              </td>
+                              <td className="p-4 max-w-xs">
+                                <div className="flex flex-wrap gap-1">
+                                  {uniqueMatched.slice(0, 4).map((s, j) => (
+                                    <span key={j} className="px-2 py-0.5 bg-accent text-foreground rounded text-[10px] uppercase font-semibold">{s}</span>
+                                  ))}
+                                  {uniqueMatched.length > 4 && <span className="text-[10px] text-muted-foreground">+{uniqueMatched.length - 4} more</span>}
+                                </div>
+                              </td>
+                              <td className="p-4 max-w-xs">
+                                <div className="flex flex-wrap gap-1">
+                                  {uniqueMissing.length ? uniqueMissing.slice(0, 3).map((s, j) => (
+                                    <span key={j} className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded text-[10px] uppercase font-semibold">{s}</span>
+                                  )) : <span className="text-emerald-600 dark:text-emerald-400 font-semibold">None missing</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                  {rankedCandidates.map((candidate, index) => {
+                    const passed = candidate.hard_constraint_passed;
+                    const missingCount = candidate.missing_skills?.length || 0;
+                    const hasMustHaveReq = Boolean(mustHave?.trim());
+                    const isShortlisted = shortlistedIds.has(candidate.id || index);
+
+                    const uniqueMatched = Array.from(new Set((candidate.matched_skills || []).map(s => String(s).trim().toUpperCase()))).filter(Boolean);
+                    const uniqueTarget = Array.from(new Set((candidate.matched_target_keywords || []).map(s => String(s).trim().toUpperCase()))).filter(Boolean);
+                    const uniqueMissing = Array.from(new Set((candidate.missing_skills || []).map(s => String(s).trim().toUpperCase()))).filter(Boolean);
+
+                    const totalScore = Math.max(0, Math.min(100, candidate.total_score || 0));
+
+                    return (
+                      <div key={index} className="bg-card border border-border/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden group">
+                        
+                        {/* Top Header Row */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-5 border-b border-border/60">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className={`px-3 py-1 rounded-md text-xs font-black uppercase tracking-widest shadow-sm ${
+                              index === 0 ? 'bg-emerald-600 text-white' : 
+                              index === 1 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950' : 
+                              index === 2 ? 'bg-indigo-600 text-white' : 
+                              'bg-slate-800 text-slate-100'
+                            }`}>
+                              RANK #{index + 1}
+                            </span>
+                            <h3 className="text-2xl font-black text-card-foreground tracking-tight">
+                              {candidate.name}
+                            </h3>
+                            {candidate.years_experience > 0 && (
+                              <span className="px-3 py-1 rounded-md text-xs font-bold bg-accent text-foreground/80 border border-border/60">
+                                {candidate.years_experience} Yrs Exp
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 self-end md:self-auto">
+                            <span className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wider shadow-sm ${
+                              totalScore >= 80 ? 'bg-emerald-600 text-white' : 
+                              totalScore >= 65 ? 'bg-indigo-600 text-white' : 
+                              'bg-slate-800 text-white'
+                            }`}>
+                              {totalScore.toFixed(1)}% MATCH
+                            </span>
                           </div>
                         </div>
-                        <div>
-                          <strong className="block text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Target Keywords Found</strong>
-                          <div className="flex flex-wrap gap-2">
-                            {candidate.matched_target_keywords?.length ? candidate.matched_target_keywords.map((s, j) => <span key={j} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-muted-foreground/70 italic">None</span>}
+
+                        {/* Executive AI Insights */}
+                        <div className="mt-5 p-4 rounded-xl bg-accent/30 border border-border/60 text-xs space-y-2">
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Executive Summary & Candidate Insights</div>
+                          {candidate.evidence?.summary && (
+                            <p className="text-sm font-semibold text-foreground/90 leading-snug">{candidate.evidence.summary}</p>
+                          )}
+                          {candidate.evidence?.strengths?.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                              {candidate.evidence.strengths.map((str, sIdx) => (
+                                <div key={sIdx} className="flex items-start gap-2 text-muted-foreground font-medium">
+                                  <span className="text-emerald-500 font-bold text-sm shrink-0 leading-none">•</span>
+                                  <span>{str}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Score Bar Breakdown Grid */}
+                        <div className="mt-5 p-4 rounded-xl bg-background/50 border border-border/50 max-w-3xl">
+                          {renderScoreBar("Total Match Score", candidate.total_score)}
+                          {renderScoreBar("Required Skill Alignment", candidate.skill_score)}
+                          {Boolean(mustHave?.trim()) && renderScoreBar("Must-Have Match Rate", candidate.must_have_match_rate)}
+                          {Boolean(niceToHave?.trim()) && renderScoreBar("Nice-To-Have Match Rate", candidate.nice_to_have_match_rate)}
+                          {Boolean(targetKeywords?.trim()) && renderScoreBar("Target Domain Keywords", candidate.target_keyword_match_rate)}
+                          {renderScoreBar("Experience Alignment", candidate.experience_score)}
+                        </div>
+
+                        {/* Skills Inventory Breakdown */}
+                        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 border-t border-border/60 text-xs">
+                          <div>
+                            <span className="block text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest mb-2.5">Verified Core Skills</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {uniqueMatched.length ? uniqueMatched.map((s, j) => (
+                                <span key={j} className="px-2.5 py-1 bg-accent text-foreground/90 rounded-md text-[11px] font-semibold tracking-wide uppercase border border-border/50">{s}</span>
+                              )) : <span className="text-muted-foreground italic">None detected</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="block text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest mb-2.5">Target Keywords Found</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {uniqueTarget.length ? uniqueTarget.map((s, j) => (
+                                <span key={j} className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-md text-[11px] font-semibold tracking-wide uppercase">{s}</span>
+                              )) : <span className="text-muted-foreground italic">None detected</span>}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="block text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest mb-2.5">Skill Gaps / Missing</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {uniqueMissing.length ? uniqueMissing.map((s, j) => (
+                                <span key={j} className="px-2.5 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-md text-[11px] font-semibold tracking-wide uppercase">{s}</span>
+                              )) : <span className="text-muted-foreground italic">None missing</span>}
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <strong className="block text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">Missing Skills</strong>
-                          <div className="flex flex-wrap gap-2">
-                            {candidate.missing_skills?.length ? candidate.missing_skills.map((s, j) => <span key={j} className="px-3 py-1.5 bg-red-500/10 text-red-500 rounded-lg text-[11px] font-bold tracking-wide uppercase">{s}</span>) : <span className="text-muted-foreground/70 italic">None</span>}
-                          </div>
-                        </div>
+
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
           {rankedCandidates.length >= 2 && (
             <div className="bg-card p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border/60">
