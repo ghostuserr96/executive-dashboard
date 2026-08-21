@@ -17,6 +17,7 @@ import { useMessages } from '../hooks/useMessages';
 import { usePresence } from '../hooks/usePresence';
 import { useAuth } from '../context/AuthContext';
 import { useDataContext } from '../context/DataContext';
+import { chatService } from '../services/chatService';
 import { formatTimestamp, getAvatarUrl, isImageFile, isAttachmentSupported, getFileCategory } from '../utils/chatHelpers';
 
 export const getDisplayName = (channel, currentUser) => {
