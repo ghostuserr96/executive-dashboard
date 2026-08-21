@@ -471,8 +471,8 @@ export default function AiResumeScreening() {
                           if (preview.status === "error") {
                             return (
                               <div key={i} className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-                                <h4 className="text-sm font-bold text-red-500">{preview.file_name}</h4>
-                                <p className="text-xs text-red-500 mt-1 font-medium">{preview.message || "Parse failed."}</p>
+                                <h4 className="text-sm font-bold text-red-500">{preview.filename}</h4>
+                                <p className="text-xs text-red-500 mt-1 font-medium">{preview.error || "Parse failed."}</p>
                               </div>
                             );
                           }

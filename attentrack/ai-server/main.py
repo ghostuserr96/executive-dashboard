@@ -46,10 +46,7 @@ elif openai_api_key:
     client = OpenAI(api_key=openai_api_key)
     LLM_MODEL = "gpt-4o-mini"
 else:
-    # Fallback to local Ollama
-    print("Using local Ollama API for LLM")
-    client = OpenAI(api_key="ollama", base_url="http://localhost:11434/v1")
-    LLM_MODEL = "llama3"
+    raise RuntimeError("No AI API key found. Please set GROQ_API_KEY in your .env file.")
 
 app = FastAPI(title="Attentrack AI Resume Screening API")
 
@@ -346,6 +343,7 @@ Candidates:
             })
     except Exception as e:
         print(f"Failed to analyze: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze: {str(e)}")
         
     ranked_candidates.sort(key=lambda x: x["total_score"], reverse=True)
     return {
