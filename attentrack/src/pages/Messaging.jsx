@@ -46,22 +46,30 @@ const ChannelItem = ({ channel, isActive, onClick, unreadCount }) => (
 
 const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser, otherUserAvatar }) => {
   const displayName = getDisplayName(channel, currentUser);
+  const initials = displayName ? displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+  
   return (
     <button
       onClick={() => onClick(channel)}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
     >
       <div className="relative shrink-0">
-        <div className="w-6 h-6 rounded-full bg-muted overflow-hidden">
-          <img
-            src={otherUserAvatar || getAvatarUrl(displayName)}
-            alt={displayName}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-background ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
+        {otherUserAvatar ? (
+          <div className="w-8 h-8 rounded-full overflow-hidden border border-border/50 bg-muted">
+            <img
+              src={otherUserAvatar}
+              alt={displayName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-primary/15 text-primary font-bold text-xs flex items-center justify-center border border-primary/20 shrink-0">
+            {initials}
+          </div>
+        )}
+        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
       </div>
-      <span className="truncate flex-1 text-left">{displayName}</span>
+      <span className="truncate flex-1 text-left font-medium">{displayName}</span>
       {unreadCount > 0 && (
         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold shrink-0">
           {unreadCount}
@@ -74,19 +82,23 @@ const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser
 const ChatMessage = ({ message, currentUserId, senderAvatar }) => {
   const isOwn = message.senderId === currentUserId;
   const time = formatTimestamp(message.createdAt);
-  const readBy = message.readBy || {};
-  const readByKeys = Array.isArray(readBy) ? readBy : Object.keys(readBy);
-  const allRead = readByKeys.filter(id => String(id) !== String(currentUserId)).length > 0;
+  const initials = message.senderName ? message.senderName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
 
   return (
     <div className={`flex gap-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
-      <div className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 mt-1">
-        <img
-          src={senderAvatar || getAvatarUrl(message.senderName)}
-          alt={message.senderName}
-          className="w-full h-full object-cover"
-        />
-      </div>
+      {senderAvatar ? (
+        <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 mt-1 border border-border/50 bg-muted">
+          <img
+            src={senderAvatar}
+            alt={message.senderName}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="w-9 h-9 rounded-full bg-primary/15 text-primary font-bold text-xs flex items-center justify-center shrink-0 mt-1 border border-primary/20">
+          {initials}
+        </div>
+      )}
       <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
         <div className={`flex items-baseline gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
           <h4 className="font-semibold text-[14px] text-card-foreground">
@@ -402,11 +414,17 @@ export default function Messaging() {
                   <div className="px-2 py-2 text-[14px] text-muted-foreground">No direct messages yet</div>
                 ) : (
                   displayDMs.map((dm) => {
-                    // Extract the other person's ID to check online status.
-                    // dm.participants typically contains [userId, otherUserId]
-                    const currentIdStr = user?.id ? String(user.id) : user?.email;
-                    const otherUserId = dm.participants?.find((p) => p !== currentIdStr);
-                    const otherEmployee = employees?.find(e => String(e.id) === String(otherUserId) || e.email === otherUserId);
+                    const currentIdStr = user?.id ? String(user.id) : (user?.email || '');
+                    const displayName = getDisplayName(dm, user);
+                    const membersList = Array.isArray(dm.members) ? dm.members : (Array.isArray(dm.participants) ? dm.participants : []);
+                    const otherUserId = membersList.find((p) => String(p) !== currentIdStr);
+
+                    const otherEmployee = employees?.find(e => 
+                      String(e.id) === String(otherUserId) || 
+                      (e.email && String(e.email).toLowerCase() === String(otherUserId).toLowerCase()) ||
+                      (e.name && String(e.name).trim().toLowerCase() === String(displayName).trim().toLowerCase())
+                    );
+
                     return (
                       <DMItem
                         key={dm.id}
@@ -457,11 +475,11 @@ export default function Messaging() {
                 <EmptyState channelName={getDisplayName(activeChannel, user)} />
               ) : (
                 messages.map((msg) => {
-                  const isCurrentUser = String(msg.senderId) === String(user?.id) || msg.senderId === user?.email || msg.senderName === user?.name;
+                  const isCurrentUser = String(msg.senderId) === String(user?.id) || msg.senderId === user?.email || (msg.senderName && String(msg.senderName).trim().toLowerCase() === String(user?.name).trim().toLowerCase());
                   const senderEmp = employees?.find(e => 
                     String(e.id) === String(msg.senderId) || 
-                    e.email === msg.senderId || 
-                    e.name === msg.senderName
+                    (e.email && String(e.email).toLowerCase() === String(msg.senderId).toLowerCase()) || 
+                    (e.name && String(e.name).trim().toLowerCase() === String(msg.senderName).trim().toLowerCase())
                   );
                   const avatarToUse = isCurrentUser ? (user?.avatar || user?.photoURL || senderEmp?.avatar) : senderEmp?.avatar;
                   

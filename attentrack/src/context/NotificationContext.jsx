@@ -19,48 +19,55 @@ export const NotificationProvider = ({ children }) => {
       return;
     }
 
-    const currentIdStr = user?.id ? String(user.id) : user?.email;
+    const currentIdStr = user?.id ? String(user.id) : (user?.email || '');
+    const currentNameStr = user?.name || user?.email || '';
 
     const unsubscribe = chatService.subscribeChannels((data) => {
-      if (initialLoadRef.current) {
-        // Just populate the times so we don't notify for old messages
-        data.forEach(channel => {
-          lastMessageTimesRef.current[channel.id] = channel.lastMessageAt || 0;
-        });
-        initialLoadRef.current = false;
-        return;
-      }
+      let unreadMsgNotifications = [];
 
       data.forEach(channel => {
-        const isParticipant = channel.type === 'dm'
-          ? channel.participants?.includes(currentIdStr)
-          : channel.members?.includes(currentIdStr);
+        const membersList = Array.isArray(channel.members) ? channel.members.map(String) : [];
+        const participantsList = Array.isArray(channel.participants) ? channel.participants.map(String) : [];
+        
+        const isParticipant = membersList.includes(currentIdStr) || 
+                              participantsList.includes(currentIdStr) ||
+                              (channel.name && channel.name.includes(currentNameStr));
 
         if (!isParticipant) return;
 
         const prevTime = lastMessageTimesRef.current[channel.id] || 0;
         const newTime = channel.lastMessageAt || 0;
+        const senderId = channel.lastMessageSenderId ? String(channel.lastMessageSenderId) : '';
 
-        if (newTime > prevTime && channel.lastMessageSenderId && channel.lastMessageSenderId !== currentIdStr) {
-          // Add real notification for new incoming message
-          const notif = {
-            id: `msg_${channel.id}_${newTime}`,
-            title: `New Message from ${channel.lastMessageSenderName}`,
-            message: channel.lastMessage,
-            time: 'Just now',
-            path: '/messaging',
-            unread: true
-          };
-          
-          setNotifications(prev => {
-            // Prevent duplicate notifications
-            if (prev.some(n => n.id === notif.id)) return prev;
-            return [notif, ...prev];
-          });
-          
-          lastMessageTimesRef.current[channel.id] = newTime;
+        if (senderId && senderId !== currentIdStr && channel.lastMessage) {
+          if (initialLoadRef.current || newTime > prevTime) {
+            const notif = {
+              id: `msg_${channel.id}_${newTime}`,
+              title: `Message from ${channel.lastMessageSenderName || 'Team'}`,
+              message: channel.lastMessage,
+              time: 'Recent',
+              path: '/messaging',
+              unread: true
+            };
+            unreadMsgNotifications.push(notif);
+            lastMessageTimesRef.current[channel.id] = newTime;
+          }
         }
       });
+
+      if (unreadMsgNotifications.length > 0) {
+        setNotifications(prev => {
+          const combined = [...unreadMsgNotifications];
+          prev.forEach(p => {
+            if (!combined.some(c => c.id === p.id)) {
+              combined.push(p);
+            }
+          });
+          return combined;
+        });
+      }
+
+      initialLoadRef.current = false;
     });
 
     return () => {

@@ -133,8 +133,8 @@ export const getInitials = (name) => {
 };
 
 export const getAvatarUrl = (name, seed) => {
-  const safeSeed = seed || name || 'unknown';
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(safeSeed)}&backgroundColor=e2e8f0`;
+  const safeSeed = seed || name || 'User';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(safeSeed)}&background=3b82f6&color=fff&bold=true`;
 };
 
 export const getDepartmentColor = (department) => {

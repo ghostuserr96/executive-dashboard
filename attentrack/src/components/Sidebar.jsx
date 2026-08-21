@@ -9,14 +9,17 @@ import {
 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 
 function SidebarContent({ onItemClick }) {
   const { employees = [], leaves = [], tasks = [] } = useDataContext();
   const { isHRAdmin, activeRole, switchRole } = useAuth();
+  const { notifications = [] } = useNotifications();
 
   const employeeCount = employees.length;
   const pendingLeaveCount = leaves.filter(l => l.status === 'Pending').length;
   const pendingTasksCount = tasks.filter(t => t.status !== 'Done' && t.status !== 'Completed').length;
+  const unreadMsgCount = notifications.filter(n => n.unread && (n.path === '/messaging' || String(n.id).startsWith('msg_'))).length;
 
   return (
     <>
@@ -238,11 +241,16 @@ function SidebarContent({ onItemClick }) {
                 <li>
                   <NavLink to="/messaging" onClick={onItemClick} className={({ isActive }) => `group flex items-center gap-2.5 rounded-full px-2.5 py-2 text-sm transition-all font-medium ${isActive ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'}`}>
                     {({ isActive }) => (
-  <>
-    <MessageSquare className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-    <span className="flex-1 truncate">Messaging</span>
-  </>
-)}
+                      <>
+                        <MessageSquare className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                        <span className="flex-1 truncate">Messaging</span>
+                        {unreadMsgCount > 0 && (
+                          <div className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold h-5 px-1.5 text-[10px] shrink-0">
+                            {unreadMsgCount}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </NavLink>
                 </li>
               </ul>
