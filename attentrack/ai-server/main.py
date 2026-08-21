@@ -39,7 +39,7 @@ if groq_api_key:
     # Use Groq
     print("Using Groq API for LLM")
     client = OpenAI(api_key=groq_api_key, base_url="https://api.groq.com/openai/v1")
-    LLM_MODEL = "llama-3.1-8b-instant"
+    LLM_MODEL = "gpt-oss-120b"
 elif openai_api_key:
     # Use OpenAI
     print("Using OpenAI API for LLM")
