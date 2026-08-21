@@ -92,10 +92,6 @@ export const NotificationProvider = ({ children }) => {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   };
 
-  const clearMessagingNotifications = () => {
-    setNotifications((prev) => prev.filter((n) => n.path !== '/messaging' && !String(n.id).startsWith('msg_')));
-  };
-
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
@@ -105,7 +101,6 @@ export const NotificationProvider = ({ children }) => {
         addNotification,
         markAsRead,
         markAllAsRead,
-        clearMessagingNotifications,
         unreadCount,
       }}
     >

@@ -17,18 +17,13 @@ import { useMessages } from '../hooks/useMessages';
 import { usePresence } from '../hooks/usePresence';
 import { useAuth } from '../context/AuthContext';
 import { useDataContext } from '../context/DataContext';
-import { useNotifications } from '../context/NotificationContext';
 import { chatService } from '../services/chatService';
 import { formatTimestamp, getAvatarUrl, isImageFile, isAttachmentSupported, getFileCategory } from '../utils/chatHelpers';
-import { rtdb } from '../firebase';
-import { ref, get, onValue } from 'firebase/database';
 
 export const getDisplayName = (channel, currentUser) => {
   if (!channel) return '';
   if (channel.type === 'dm' && channel.name && channel.name.includes(', ')) {
-    const currentNameLower = String(currentUser?.name || '').trim().toLowerCase();
-    const filtered = channel.name.split(', ').filter(n => String(n).trim().toLowerCase() !== currentNameLower);
-    return filtered.join(', ') || channel.name;
+    return channel.name.split(', ').filter(n => n !== currentUser?.name).join(', ') || channel.name;
   }
   return channel.name;
 };
@@ -52,7 +47,7 @@ const ChannelItem = ({ channel, isActive, onClick, unreadCount }) => (
 
 const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser, otherUserAvatar }) => {
   const displayName = getDisplayName(channel, currentUser);
-  const initials = String(displayName || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const avatarSrc = otherUserAvatar || getAvatarUrl(displayName);
 
   return (
     <button
@@ -60,12 +55,12 @@ const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
     >
       <div className="relative shrink-0">
-        <div className="w-8 h-8 rounded-full overflow-hidden border border-border/50 bg-muted flex items-center justify-center">
-          {otherUserAvatar ? (
-            <img src={otherUserAvatar} alt={displayName} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-[11px] font-bold text-muted-foreground">{initials}</span>
-          )}
+        <div className="w-8 h-8 rounded-full overflow-hidden border border-border/50 bg-muted">
+          <img
+            src={avatarSrc}
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
       </div>
@@ -82,16 +77,16 @@ const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser
 const ChatMessage = ({ message, currentUserId, senderAvatar }) => {
   const isOwn = message.senderId === currentUserId;
   const time = formatTimestamp(message.createdAt);
-  const initials = String(message.senderName || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const avatarSrc = senderAvatar || getAvatarUrl(message.senderName);
 
   return (
     <div className={`flex gap-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
-      <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 mt-1 border border-border/50 bg-muted flex items-center justify-center">
-        {senderAvatar ? (
-          <img src={senderAvatar} alt={message.senderName} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-[11px] font-bold text-muted-foreground">{initials}</span>
-        )}
+      <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 mt-1 border border-border/50 bg-muted">
+        <img
+          src={avatarSrc}
+          alt={message.senderName}
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
         <div className={`flex items-baseline gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
@@ -240,10 +235,7 @@ export default function Messaging() {
 
   const { user } = useAuth();
   const { employees } = useDataContext();
-  const { clearMessagingNotifications } = useNotifications() || {};
   const [usersMap, setUsersMap] = useState({});
-  // Direct Firebase name→avatar map — built from /employees and /users in RTDB
-  const [avatarByName, setAvatarByName] = useState({});
   const [isNewChatOpen, setIsNewChatOpen] = useState(false); // 'channel' | 'dm' | false
   const [newChatName, setNewChatName] = useState('');
   const [newChatSearch, setNewChatSearch] = useState('');
@@ -254,47 +246,6 @@ export default function Messaging() {
   const fileInputRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  useEffect(() => {
-    if (clearMessagingNotifications) {
-      clearMessagingNotifications();
-    }
-  }, [activeChannel?.id]);
-
-  // Build direct name→avatar map by reading Firebase RTDB in real-time
-  useEffect(() => {
-    const buildAvatarMap = (empSnap, userSnap) => {
-      const map = {};
-      const register = (obj) => {
-        if (!obj) return;
-        const av = obj.avatar || obj.photoURL || null;
-        const name = String(obj.name || '').trim().toLowerCase();
-        if (name && av) map[name] = av;
-        if (obj.email) {
-          const em = String(obj.email).trim().toLowerCase();
-          if (em && av) map[em] = av;
-        }
-      };
-      if (empSnap) Object.values(empSnap).forEach(register);
-      if (userSnap) Object.values(userSnap).forEach(register);
-      setAvatarByName(map);
-    };
-
-    let latestEmp = null;
-    let latestUser = null;
-
-    const unsubEmp = onValue(ref(rtdb, 'employees'), (snap) => {
-      latestEmp = snap.exists() ? snap.val() : {};
-      buildAvatarMap(latestEmp, latestUser);
-    });
-    const unsubUser = onValue(ref(rtdb, 'users'), (snap) => {
-      latestUser = snap.exists() ? snap.val() : {};
-      buildAvatarMap(latestEmp, latestUser);
-    });
-
-    return () => { unsubEmp(); unsubUser(); };
-  }, []);
-
-  // subscribeAllUsers for detailed usersMap (fallback)
   useEffect(() => {
     const unsub = chatService.subscribeAllUsers((map) => {
       setUsersMap(map);
@@ -307,26 +258,22 @@ export default function Messaging() {
   const getBackendPhoto = (identifier) => {
     if (!identifier) return null;
     const str = String(identifier).trim().toLowerCase();
-
-    // Match by NAME first — that is what the DM display name gives us
-    if (employees && employees.length > 0) {
-      // exact name match
-      const byName = employees.find(e => String(e.name || '').trim().toLowerCase() === str);
-      if (byName?.avatar) return byName.avatar;
-      // partial name match ("luffy" matches "Monkey D. Luffy" etc.)
-      const byPartial = employees.find(e => {
-        const eName = String(e.name || '').trim().toLowerCase();
-        return eName.includes(str) || str.includes(eName);
-      });
-      if (byPartial?.avatar) return byPartial.avatar;
-    }
-
-    // Then try usersMap by name key
+    
     if (usersMap[str]?.avatar) return usersMap[str].avatar;
-    for (const key in usersMap) {
-      if (usersMap[key]?.avatar && (key === str || key.includes(str) || str.includes(key))) {
-        return usersMap[key].avatar;
-      }
+    
+    const firstName = str.split(' ')[0];
+    if (usersMap[firstName]?.avatar) return usersMap[firstName].avatar;
+
+    if (employees && employees.length > 0) {
+      const emp = employees.find(e => {
+        if (!e) return false;
+        const eId = String(e.id || '').toLowerCase();
+        const eEmail = String(e.email || '').trim().toLowerCase();
+        const eName = String(e.name || '').trim().toLowerCase();
+        if (eId === str || eEmail === str || eName === str || eName.includes(str) || str.includes(eName)) return true;
+        return false;
+      });
+      if (emp?.avatar) return emp.avatar;
     }
 
     return null;
@@ -490,31 +437,12 @@ export default function Messaging() {
                   <div className="px-2 py-2 text-[14px] text-muted-foreground">No direct messages yet</div>
                 ) : (
                   displayDMs.map((dm) => {
-                    // displayName is the OTHER person's name (case-insensitive filter already applied)
-                    const displayName = getDisplayName(dm, user);
-                    const displayNameLower = String(displayName || '').trim().toLowerCase();
-
-                    // Direct lookup from employees by name — reactive, re-renders when employees load
-                    const otherEmp = employees.find(e =>
-                      String(e.name || '').trim().toLowerCase() === displayNameLower
-                    ) || employees.find(e => {
-                      const n = String(e.name || '').trim().toLowerCase();
-                      return n.includes(displayNameLower) || displayNameLower.includes(n);
-                    });
-                    // avatarByName is populated directly from Firebase RTDB (employees + users)
-                    const avatarToUse = avatarByName[displayNameLower]
-                      || otherEmp?.avatar
-                      || usersMap[displayNameLower]?.avatar
-                      || null;
-
-                    // For online presence, find the other member's ID from the members list
                     const currentIdStr = String(user?.id || user?.email || '').toLowerCase();
-                    const currentNameLower = String(user?.name || '').trim().toLowerCase();
+                    const displayName = getDisplayName(dm, user);
                     const membersList = Array.isArray(dm.members) ? dm.members : (Array.isArray(dm.participants) ? dm.participants : []);
-                    const otherUserId = membersList.find(p => {
-                      const ps = String(p).trim().toLowerCase();
-                      return ps !== currentIdStr && ps !== currentNameLower;
-                    });
+                    const otherUserId = membersList.find((p) => String(p).toLowerCase() !== currentIdStr);
+
+                    const avatarToUse = dm.avatar || dm.photoURL || dm.otherUserAvatar || getBackendPhoto(otherUserId) || getBackendPhoto(displayName);
 
                     return (
                       <DMItem
@@ -566,26 +494,19 @@ export default function Messaging() {
                 <EmptyState channelName={getDisplayName(activeChannel, user)} />
               ) : (
                 messages.map((msg) => {
+                  const currentIdStr = String(user?.id || user?.email || '').toLowerCase();
                   const currentNameStr = String(user?.name || '').trim().toLowerCase();
+                  const msgSenderIdClean = String(msg.senderId || '').trim().toLowerCase();
                   const msgSenderNameClean = String(msg.senderName || '').trim().toLowerCase();
-                  const isCurrentUser = currentNameStr && msgSenderNameClean === currentNameStr;
 
-                  // Direct employees lookup by senderName — reactive, no intermediate caching
+                  const isCurrentUser = msgSenderIdClean === currentIdStr || (currentNameStr && msgSenderNameClean === currentNameStr);
+                  
                   let avatarToUse = null;
+
                   if (isCurrentUser) {
-                    avatarToUse = user?.avatar || user?.photoURL || avatarByName[currentNameStr] || null;
+                    avatarToUse = user?.avatar || user?.photoURL || getBackendPhoto(user?.id) || getBackendPhoto(user?.name);
                   } else {
-                    const senderEmp = employees.find(e =>
-                      String(e.name || '').trim().toLowerCase() === msgSenderNameClean
-                    ) || employees.find(e => {
-                      const n = String(e.name || '').trim().toLowerCase();
-                      return n.includes(msgSenderNameClean) || msgSenderNameClean.includes(n);
-                    });
-                    // avatarByName is the most direct — reads Firebase RTDB directly
-                    avatarToUse = avatarByName[msgSenderNameClean]
-                      || senderEmp?.avatar
-                      || usersMap[msgSenderNameClean]?.avatar
-                      || null;
+                    avatarToUse = getBackendPhoto(msg.senderId) || getBackendPhoto(msg.senderName);
                   }
 
                   return (
