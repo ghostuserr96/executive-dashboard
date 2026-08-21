@@ -46,27 +46,21 @@ const ChannelItem = ({ channel, isActive, onClick, unreadCount }) => (
 
 const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser, otherUserAvatar }) => {
   const displayName = getDisplayName(channel, currentUser);
-  const initials = displayName ? displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
-  
+  const avatarSrc = otherUserAvatar || getAvatarUrl(displayName);
+
   return (
     <button
       onClick={() => onClick(channel)}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
     >
       <div className="relative shrink-0">
-        {otherUserAvatar ? (
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-border/50 bg-muted">
-            <img
-              src={otherUserAvatar}
-              alt={displayName}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-primary/15 text-primary font-bold text-xs flex items-center justify-center border border-primary/20 shrink-0">
-            {initials}
-          </div>
-        )}
+        <div className="w-8 h-8 rounded-full overflow-hidden border border-border/50 bg-muted">
+          <img
+            src={avatarSrc}
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
+        </div>
         <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
       </div>
       <span className="truncate flex-1 text-left font-medium">{displayName}</span>
@@ -82,23 +76,17 @@ const DMItem = ({ channel, isActive, onClick, unreadCount, isOnline, currentUser
 const ChatMessage = ({ message, currentUserId, senderAvatar }) => {
   const isOwn = message.senderId === currentUserId;
   const time = formatTimestamp(message.createdAt);
-  const initials = message.senderName ? message.senderName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+  const avatarSrc = senderAvatar || getAvatarUrl(message.senderName);
 
   return (
     <div className={`flex gap-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
-      {senderAvatar ? (
-        <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 mt-1 border border-border/50 bg-muted">
-          <img
-            src={senderAvatar}
-            alt={message.senderName}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      ) : (
-        <div className="w-9 h-9 rounded-full bg-primary/15 text-primary font-bold text-xs flex items-center justify-center shrink-0 mt-1 border border-primary/20">
-          {initials}
-        </div>
-      )}
+      <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 mt-1 border border-border/50 bg-muted">
+        <img
+          src={avatarSrc}
+          alt={message.senderName}
+          className="w-full h-full object-cover"
+        />
+      </div>
       <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
         <div className={`flex items-baseline gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
           <h4 className="font-semibold text-[14px] text-card-foreground">
@@ -416,21 +404,38 @@ export default function Messaging() {
                   displayDMs.map((dm) => {
                     const currentIdStr = user?.id ? String(user.id) : (user?.email || '');
                     const displayName = getDisplayName(dm, user);
+                    const cleanDisplayName = String(displayName || '').trim().toLowerCase();
                     const membersList = Array.isArray(dm.members) ? dm.members : (Array.isArray(dm.participants) ? dm.participants : []);
                     const otherUserId = membersList.find((p) => String(p) !== currentIdStr);
 
-                    const otherEmployee = employees?.find(e => 
-                      String(e.id) === String(otherUserId) || 
-                      (e.email && String(e.email).toLowerCase() === String(otherUserId).toLowerCase()) ||
-                      (e.name && String(e.name).trim().toLowerCase() === String(displayName).trim().toLowerCase())
-                    );
+                    let avatarToUse = dm.avatar || dm.photoURL || dm.otherUserAvatar || null;
+
+                    if (!avatarToUse && employees && employees.length > 0) {
+                      const matchedEmp = employees.find(e => {
+                        if (!e) return false;
+                        const eId = String(e.id || '').toLowerCase();
+                        const eEmail = String(e.email || '').trim().toLowerCase();
+                        const eName = String(e.name || '').trim().toLowerCase();
+                        const otherStr = String(otherUserId || '').trim().toLowerCase();
+
+                        if (eId && (eId === otherStr || (dm.members && dm.members.some(m => String(m).toLowerCase() === eId)))) return true;
+                        if (eEmail && (eEmail === otherStr || eEmail === cleanDisplayName)) return true;
+                        if (eName && (eName === cleanDisplayName || eName.includes(cleanDisplayName) || cleanDisplayName.includes(eName))) return true;
+
+                        return false;
+                      });
+
+                      if (matchedEmp?.avatar) {
+                        avatarToUse = matchedEmp.avatar;
+                      }
+                    }
 
                     return (
                       <DMItem
                         key={dm.id}
                         channel={dm}
                         currentUser={user}
-                        otherUserAvatar={otherEmployee?.avatar}
+                        otherUserAvatar={avatarToUse}
                         isActive={activeChannel?.id === dm.id}
                         onClick={selectChannel}
                         unreadCount={getUnreadCount(dm)}
