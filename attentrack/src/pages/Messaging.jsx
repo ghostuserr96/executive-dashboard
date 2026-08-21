@@ -402,11 +402,13 @@ export default function Messaging() {
                   <div className="px-2 py-2 text-[14px] text-muted-foreground">No direct messages yet</div>
                 ) : (
                   displayDMs.map((dm) => {
-                    const currentIdStr = user?.id ? String(user.id) : (user?.email || '');
+                    const currentIdStr = String(user?.id || user?.email || '').toLowerCase();
+                    const currentNameStr = String(user?.name || '').trim().toLowerCase();
                     const displayName = getDisplayName(dm, user);
                     const cleanDisplayName = String(displayName || '').trim().toLowerCase();
                     const membersList = Array.isArray(dm.members) ? dm.members : (Array.isArray(dm.participants) ? dm.participants : []);
-                    const otherUserId = membersList.find((p) => String(p) !== currentIdStr);
+                    const otherUserId = membersList.find((p) => String(p).toLowerCase() !== currentIdStr);
+                    const otherStr = String(otherUserId || '').trim().toLowerCase();
 
                     let avatarToUse = dm.avatar || dm.photoURL || dm.otherUserAvatar || null;
 
@@ -416,11 +418,14 @@ export default function Messaging() {
                         const eId = String(e.id || '').toLowerCase();
                         const eEmail = String(e.email || '').trim().toLowerCase();
                         const eName = String(e.name || '').trim().toLowerCase();
-                        const otherStr = String(otherUserId || '').trim().toLowerCase();
 
-                        if (eId && (eId === otherStr || (dm.members && dm.members.some(m => String(m).toLowerCase() === eId)))) return true;
-                        if (eEmail && (eEmail === otherStr || eEmail === cleanDisplayName)) return true;
-                        if (eName && (eName === cleanDisplayName || eName.includes(cleanDisplayName) || cleanDisplayName.includes(eName))) return true;
+                        // EXCLUDE current logged-in user
+                        if (eId === currentIdStr || eEmail === currentIdStr || (currentNameStr && eName === currentNameStr)) {
+                          return false;
+                        }
+
+                        if (otherStr && (eId === otherStr || eEmail === otherStr)) return true;
+                        if (cleanDisplayName && (eName === cleanDisplayName || eName.includes(cleanDisplayName) || cleanDisplayName.includes(eName))) return true;
 
                         return false;
                       });
@@ -480,14 +485,37 @@ export default function Messaging() {
                 <EmptyState channelName={getDisplayName(activeChannel, user)} />
               ) : (
                 messages.map((msg) => {
-                  const isCurrentUser = String(msg.senderId) === String(user?.id) || msg.senderId === user?.email || (msg.senderName && String(msg.senderName).trim().toLowerCase() === String(user?.name).trim().toLowerCase());
-                  const senderEmp = employees?.find(e => 
-                    String(e.id) === String(msg.senderId) || 
-                    (e.email && String(e.email).toLowerCase() === String(msg.senderId).toLowerCase()) || 
-                    (e.name && String(e.name).trim().toLowerCase() === String(msg.senderName).trim().toLowerCase())
-                  );
-                  const avatarToUse = isCurrentUser ? (user?.avatar || user?.photoURL || senderEmp?.avatar) : senderEmp?.avatar;
+                  const currentIdStr = String(user?.id || user?.email || '').toLowerCase();
+                  const currentNameStr = String(user?.name || '').trim().toLowerCase();
+                  const msgSenderIdClean = String(msg.senderId || '').trim().toLowerCase();
+                  const msgSenderNameClean = String(msg.senderName || '').trim().toLowerCase();
+
+                  const isCurrentUser = msgSenderIdClean === currentIdStr || (currentNameStr && msgSenderNameClean === currentNameStr);
                   
+                  let avatarToUse = null;
+
+                  if (isCurrentUser) {
+                    avatarToUse = user?.avatar || user?.photoURL || null;
+                  } else {
+                    const senderEmp = employees?.find(e => {
+                      if (!e) return false;
+                      const eId = String(e.id || '').toLowerCase();
+                      const eEmail = String(e.email || '').trim().toLowerCase();
+                      const eName = String(e.name || '').trim().toLowerCase();
+
+                      if (eId === currentIdStr || eEmail === currentIdStr || (currentNameStr && eName === currentNameStr)) return false;
+
+                      if (msgSenderIdClean && (eId === msgSenderIdClean || eEmail === msgSenderIdClean)) return true;
+                      if (msgSenderNameClean && (eName === msgSenderNameClean || eName.includes(msgSenderNameClean) || msgSenderNameClean.includes(eName))) return true;
+
+                      return false;
+                    });
+
+                    if (senderEmp?.avatar) {
+                      avatarToUse = senderEmp.avatar;
+                    }
+                  }
+
                   return (
                     <ChatMessage
                       key={msg.id}
